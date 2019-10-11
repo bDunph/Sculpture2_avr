@@ -138,7 +138,7 @@ float sceneSDF(vec3 samplePoint) {
 //----------------------------------------------------------------------------------------
 float mandelbulbSDF(vec3 pos) {
 
-	float Power = 2.8;
+	float Power = 2.0;
     	float r = length(pos);
     	if(r > 1.5) return r-1.2;
     	vec3 z = pos;
@@ -146,14 +146,14 @@ float mandelbulbSDF(vec3 pos) {
     	    for (int i = 0; i < 3; i++) {
     	    	r = length(z);
     	    	if (r>1.5) break;
-    	    	theta = acos(z.y/r);
+    	    	theta = acos(z.y/r * sineControlVal);
     	    	phi = atan(z.z,z.x);
     	    	dr =  pow( r, Power-1.0)*Power*dr + 1.0;
     	    	theta *= Power;
     	    	phi *= Power;
-    	    	//z = pow(r,Power)*vec3(sin(theta * sineControlVal)*cos(phi), cos(theta), sin(phi)*sin(theta)) + pos;
+    	    	z = pow(r,Power)*vec3(sin(theta * sineControlVal)*cos(phi), cos(theta), sin(phi)*sin(theta)) + pos;
     	    	//z = pow(r,Power)*vec3(sin(theta * sineControlVal)*cos(phi), sin(phi)*sin(theta), cos(theta)) + pos;
-    	    	z = pow(r,Power)*vec3(sin(theta)*cos(phi), sin(phi)*sin(theta), cos(theta)) + pos;
+    	    	//z = pow(r,Power)*vec3(sin(theta)*cos(phi), sin(phi)*sin(theta), cos(theta)) + pos;
     	    }
     	    return 0.5*log(r)*r/dr;
 }
