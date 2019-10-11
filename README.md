@@ -1,1 +1,1 @@
-An audiovisual sculpture based on the mandelbuld fractal
+An audiovisual sculpture based on the mandelbulb fractal
