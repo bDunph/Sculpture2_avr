@@ -145,13 +145,14 @@ float mandelbulbSDF(vec3 pos) {
     	float dr = 1.0, theta, phi;
     	    for (int i = 0; i < 3; i++) {
     	    	r = length(z);
-    	    	if (r>2.0) break;
-    	    	theta = acos(z.y/r * sineControlVal);
+    	    	if (r>1.5) break;
+    	    	//theta = acos(z.y/r * sineControlVal);
+    	    	theta = acos(z.y/r);
     	    	phi = atan(z.z,z.x);
     	    	dr =  pow( r, Power-1.0)*Power*dr + 1.0;
     	    	theta *= Power;
     	    	phi *= Power;
-    	    	z = pow(r,Power)*vec3(sin(theta * sineControlVal)*cos(phi), cos(theta), sin(phi)*sin(theta)) + pos;
+    	    	z = pow(r,Power)*vec3(sin(theta)*cos(phi), cos(theta), sin(phi)*sin(theta)) + pos;
     	    	//z = pow(r,Power)*vec3(sin(theta * sineControlVal)*cos(phi), sin(phi)*sin(theta), cos(theta)) + pos;
     	    	//z = pow(r,Power)*vec3(sin(theta)*cos(phi), sin(phi)*sin(theta), cos(theta)) + pos;
     	    }
@@ -431,7 +432,6 @@ void main()
 #endif
 	//gamma correction
 	vec3 fragColor = pow(color + returnVal, vec3(1.0 / GAMMA));
-	//vec3 fragColor = pow(color, vec3(1.0 / GAMMA));
     	fragColorOut = vec4(fragColor, 1.0);
 
 //-----------------------------------------------------------------------------
