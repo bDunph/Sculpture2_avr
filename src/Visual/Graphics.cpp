@@ -187,7 +187,7 @@ bool Graphics::BInitGL(bool fullscreen){
 		std::cout << "mengerShaderProg returned NULL: Graphics::BInitGL" << std::endl;
 		return false;
 	}
-	std::string csdFileName = "sculpture1.csd";
+	std::string csdFileName = "sculpture2.csd";
 	if(!fiveCell.setup(csdFileName, skyboxShaderProg, soundObjShaderProg, groundPlaneShaderProg, fiveCellShaderProg, quadShaderProg)) {
 		std::cout << "fiveCell setup failed: Graphics BInitGL" << std::endl;
 		return false;

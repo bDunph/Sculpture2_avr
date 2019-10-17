@@ -474,4 +474,4 @@ i12	2	100000
 ;i13	0	240
 
 </CsScore>
-<
+</CsoundSynthesizer>
