@@ -14,7 +14,6 @@
 #define OBJECT_ABSORB_COLOUR_2 vec3(0.3, 9.0, 9.0)
 
 struct Moonlight {
-
 	vec3 direction;
 	vec3 colour;
 	vec3 ambient;
@@ -23,7 +22,6 @@ struct Moonlight {
 };
 
 struct Material {
-
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
@@ -146,8 +144,8 @@ float mandelbulbSDF(vec3 pos) {
     	    for (int i = 0; i < 3; i++) {
     	    	r = length(z);
     	    	if (r>1.5) break;
-    	    	//theta = acos(z.y/r * sineControlVal);
-    	    	theta = acos(z.y/r);
+    	    	theta = acos((z.y/r) + (0.01 *  sineControlVal));
+    	    	//theta = acos(z.y/r);
     	    	phi = atan(z.z,z.x);
     	    	dr =  pow( r, Power-1.0)*Power*dr + 1.0;
     	    	theta *= Power;
