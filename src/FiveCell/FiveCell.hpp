@@ -156,6 +156,7 @@ private:
 	//raymarching quad
 	unsigned int m_uiNumSceneVerts;
 	unsigned int m_uiNumSceneIndices;
+	unsigned int m_uiNumSceneTexCoords;
 
 	GLuint m_uiglSceneVAO;
 	GLuint m_uiglSceneVBO;
@@ -173,6 +174,9 @@ private:
 	GLuint m_uiglCubeMaterialDiffuseLoc;
 	GLuint m_uiglCubeMaterialSpecularLoc;
 	GLuint m_uiglCubeMaterialShininessLoc;
+
+	GLuint m_uiglGroundPlaneSpecularLoc;
+	GLuint m_uiglGroundPlaneShininessLoc;
 
 	GLint m_gliMVEPMatrixLocation;
 	GLint m_gliInverseMVEPLocation;

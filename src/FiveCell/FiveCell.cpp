@@ -564,98 +564,98 @@ bool FiveCell::setup(std::string csd, GLuint skyboxProg, GLuint soundObjProg, GL
 
 	//verts for infinite plane
 	//approach taken from https://stackoverflow.com/questions/12965161/rendering-infinitely-large-plane
-	float groundVerts[20] = {
-		0.0f, 0.0f, 0.0f, 1.0f,
-		1.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		-1.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, -1.0f, 0.0f
-	};
-
-	//unsigned int groundIndices [6] = {
-	//	0, 1, 2,
-	//	0, 2, 3
+	//float groundVerts[20] = {
+	//	0.0f, 0.0f, 0.0f, 1.0f,
+	//	1.0f, 0.0f, 0.0f, 0.0f,
+	//	0.0f, 0.0f, 1.0f, 0.0f,
+	//	-1.0f, 0.0f, 0.0f, 0.0f,
+	//	0.0f, 0.0f, -1.0f, 0.0f
 	//};
 
-	unsigned int groundIndices[12] = {
-		0, 1, 2,
-		0, 2, 3,
-		0, 3, 4,
-		0, 4, 1
-	};
+	////unsigned int groundIndices [6] = {
+	////	0, 1, 2,
+	////	0, 2, 3
+	////};
 
-	float groundTexCoords [10] = {
-		0.5f, 0.5f,
-		1.0f, 0.5f,
-		0.5f, 1.0f,
-		0.0f, 0.5f,
-		0.5f, 0.0f
-	};
+	//unsigned int groundIndices[12] = {
+	//	0, 1, 2,
+	//	0, 2, 3,
+	//	0, 3, 4,
+	//	0, 4, 1
+	//};
 
-	//Set up ground plane buffers
-	glGenVertexArrays(1, &groundVAO);
-	glBindVertexArray(groundVAO);
+	//float groundTexCoords [10] = {
+	//	0.5f, 0.5f,
+	//	1.0f, 0.5f,
+	//	0.5f, 1.0f,
+	//	0.0f, 0.5f,
+	//	0.5f, 0.0f
+	//};
 
-	GLuint groundVBO;
-	glGenBuffers(1, &groundVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, groundVBO);
-	glBufferData(GL_ARRAY_BUFFER, 20 * sizeof(float), groundVerts, GL_STATIC_DRAW);
+	////Set up ground plane buffers
+	//glGenVertexArrays(1, &groundVAO);
+	//glBindVertexArray(groundVAO);
 
-	glEnableVertexAttribArray(0);
-	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, NULL);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	//GLuint groundVBO;
+	//glGenBuffers(1, &groundVBO);
+	//glBindBuffer(GL_ARRAY_BUFFER, groundVBO);
+	//glBufferData(GL_ARRAY_BUFFER, 20 * sizeof(float), groundVerts, GL_STATIC_DRAW);
 
-	GLuint groundTexCoordVBO;
-	glGenBuffers(1, &groundTexCoordVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, groundTexCoordVBO);
-	glBufferData(GL_ARRAY_BUFFER, 10 * sizeof(float), groundTexCoords, GL_STATIC_DRAW);
+	//glEnableVertexAttribArray(0);
+	////glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	//glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+	//glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	//GLuint groundTexCoordVBO;
+	//glGenBuffers(1, &groundTexCoordVBO);
+	//glBindBuffer(GL_ARRAY_BUFFER, groundTexCoordVBO);
+	//glBufferData(GL_ARRAY_BUFFER, 10 * sizeof(float), groundTexCoords, GL_STATIC_DRAW);
 
-	glGenTextures(1, &groundTexture);
-	glBindTexture(GL_TEXTURE_2D, groundTexture);
+	//glEnableVertexAttribArray(1);
+	//glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+	//glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//glGenTextures(1, &groundTexture);
+	//glBindTexture(GL_TEXTURE_2D, groundTexture);
 
-	int texWidth, texHeight, texChannels;
-	unsigned char* groundTexData = stbi_load("desertFloor1_pow2.jpeg", &texWidth, &texHeight, &texChannels, 0);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texWidth, texHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, groundTexData);
-	glGenerateMipmap(GL_TEXTURE_2D);
+	//int texWidth, texHeight, texChannels;
+	//unsigned char* groundTexData = stbi_load("desertFloor1_pow2.jpeg", &texWidth, &texHeight, &texChannels, 0);
 
-	stbi_image_free(groundTexData);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texWidth, texHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, groundTexData);
+	//glGenerateMipmap(GL_TEXTURE_2D);
 
-	glGenBuffers(1, &groundIndexBuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, groundIndexBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12 * sizeof(unsigned int), groundIndices, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	
-	//uniform setup
-	ground_projMatLoc = glGetUniformLocation(groundPlaneProg, "projMat");
-	ground_viewMatLoc = glGetUniformLocation(groundPlaneProg, "viewMat");
-	ground_modelMatLoc = glGetUniformLocation(groundPlaneProg, "groundModelMat");
+	//stbi_image_free(groundTexData);
+	//glBindTexture(GL_TEXTURE_2D, 0);
 
-	ground_cameraPosLoc = glGetUniformLocation(groundPlaneProg, "camPos");
+	//glGenBuffers(1, &groundIndexBuffer);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, groundIndexBuffer);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12 * sizeof(unsigned int), groundIndices, GL_STATIC_DRAW);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	//
+	////uniform setup
+	//ground_projMatLoc = glGetUniformLocation(groundPlaneProg, "projMat");
+	//ground_viewMatLoc = glGetUniformLocation(groundPlaneProg, "viewMat");
+	//ground_modelMatLoc = glGetUniformLocation(groundPlaneProg, "groundModelMat");
 
-	ground_lightDirLoc = glGetUniformLocation(groundPlaneProg, "light.direction");
-	ground_lightColourLoc = glGetUniformLocation(groundPlaneProg, "light.colour");
-	ground_lightAmbientLoc = glGetUniformLocation(groundPlaneProg, "light.ambient");
-	ground_lightDiffuseLoc = glGetUniformLocation(groundPlaneProg, "light.diffuse");
-	ground_lightSpecularLoc = glGetUniformLocation(groundPlaneProg, "light.specular");
+	//ground_cameraPosLoc = glGetUniformLocation(groundPlaneProg, "camPos");
 
-	ground_materialSpecularLoc = glGetUniformLocation(groundPlaneProg, "material.specular");
-	ground_materialShininessLoc = glGetUniformLocation(groundPlaneProg, "material.shininess");
+	//ground_lightDirLoc = glGetUniformLocation(groundPlaneProg, "light.direction");
+	//ground_lightColourLoc = glGetUniformLocation(groundPlaneProg, "light.colour");
+	//ground_lightAmbientLoc = glGetUniformLocation(groundPlaneProg, "light.ambient");
+	//ground_lightDiffuseLoc = glGetUniformLocation(groundPlaneProg, "light.diffuse");
+	//ground_lightSpecularLoc = glGetUniformLocation(groundPlaneProg, "light.specular");
 
-	glBindVertexArray(0);
+	//ground_materialSpecularLoc = glGetUniformLocation(groundPlaneProg, "material.specular");
+	//ground_materialShininessLoc = glGetUniformLocation(groundPlaneProg, "material.shininess");
 
-	groundModelMatrix = modelMatrix;
+	//glBindVertexArray(0);
+
+	//groundModelMatrix = modelMatrix;
 	//glm::vec3 yTranslation = glm::vec3(0.0f, 0.0f, 0.0f);
 	//glm::mat4 translationMatrix = glm::translate(groundModelMatrix, yTranslation);
 	//glm::mat4 groundRotationMatrix = glm::rotate(groundModelMatrix, -90.0f, glm::vec3(1.0f, 0.0f, 0.0f));  
@@ -950,13 +950,13 @@ bool FiveCell::BSetupRaymarchQuad(GLuint shaderProg)
 	};
 	m_uiNumSceneIndices = _countof(sceneIndices);
 
-	//float groundRayTexCoords [10] = {
-	//	0.5f, 0.5f,
-	//	1.0f, 0.5f,
-	//	0.5f, 1.0f,
-	//	0.0f, 0.5f,
-	//	0.5f, 0.0f
-	//};
+	float groundRayTexCoords [] = {
+		0.0f, 0.0f,
+		1.0f, 0.0f,
+		1.0f, 1.0f,
+		0.0f, 1.0f,
+	};
+	m_uiNumSceneTexCoords = _countof(groundRayTexCoords);	
 
 	glGenVertexArrays(1, &m_uiglSceneVAO);
 	glBindVertexArray(m_uiglSceneVAO);
@@ -969,30 +969,30 @@ bool FiveCell::BSetupRaymarchQuad(GLuint shaderProg)
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-	//GLuint groundRayTexCoordVBO;
-	//glGenBuffers(1, &groundRayTexCoordVBO);
-	//glBindBuffer(GL_ARRAY_BUFFER, groundRayTexCoordVBO);
-	//glBufferData(GL_ARRAY_BUFFER, 10 * sizeof(float), groundRayTexCoords, GL_STATIC_DRAW);
+	GLuint m_uiglGroundTexCoords;
+	glGenBuffers(1, &m_uiglGroundTexCoords);
+	glBindBuffer(GL_ARRAY_BUFFER, m_uiglGroundTexCoords);
+	glBufferData(GL_ARRAY_BUFFER, m_uiNumSceneTexCoords * sizeof(float), groundRayTexCoords, GL_STATIC_DRAW);
 
-	//glEnableVertexAttribArray(1);
-	//glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-	//glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL); 
 
-	//glGenTextures(1, &m_uiglGroundRayTexture);
-	//glBindTexture(GL_TEXTURE_2D, m_uiglGroundRayTexture);
+	glGenTextures(1, &groundTexture);
+	glBindTexture(GL_TEXTURE_2D, groundTexture);
 
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	//int rayTexWidth, rayTexHeight, rayTexChannels;
-	//unsigned char* groundRayTexData = stbi_load("desertFloor1_pow2.jpeg", &rayTexWidth, &rayTexHeight, &rayTexChannels, 0);
+	int texWidth, texHeight, texChannels;
+	unsigned char* groundTexData = stbi_load("desertFloor1_pow2.jpeg", &texWidth, &texHeight, &texChannels, 0);
 
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, rayTexWidth, rayTexHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, groundRayTexData);
-	//glGenerateMipmap(GL_TEXTURE_2D);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texWidth, texHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, groundTexData);
+	glGenerateMipmap(GL_TEXTURE_2D);
 
-	//stbi_image_free(groundRayTexData);
+	stbi_image_free(groundTexData);
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glGenBuffers(1, &m_uiglIndexBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_uiglIndexBuffer);
@@ -1012,6 +1012,9 @@ bool FiveCell::BSetupRaymarchQuad(GLuint shaderProg)
 	m_uiglCubeMaterialDiffuseLoc = glGetUniformLocation(shaderProg, "material.cubeDiffuse");
 	m_uiglCubeMaterialSpecularLoc = glGetUniformLocation(shaderProg, "material.cubeSpecular");
 	m_uiglCubeMaterialShininessLoc = glGetUniformLocation(shaderProg, "material.cubeShininess");
+
+	m_uiglGroundPlaneSpecularLoc = glGetUniformLocation(shaderProg, "ground.specular");
+	m_uiglGroundPlaneShininessLoc = glGetUniformLocation(shaderProg, "ground.shininess");
 	
 	m_gliMVEPMatrixLocation = glGetUniformLocation(shaderProg, "MVEPMat");
 	m_gliInverseMVEPLocation = glGetUniformLocation(shaderProg, "InvMVEP");
@@ -1020,7 +1023,7 @@ bool FiveCell::BSetupRaymarchQuad(GLuint shaderProg)
 	m_gliSineControlValLoc = glGetUniformLocation(shaderProg, "sineControlVal");
 
 	m_uiglSkyboxTexLoc = glGetUniformLocation(shaderProg, "skyboxTex");
-	m_uiglGroundTexLoc = glGetUniformLocation(shaderProg, "groundReflectionTex");
+	m_uiglGroundTexLoc = glGetUniformLocation(shaderProg, "ground.texture");
 
 	raymarchQuadModelMatrix = glm::mat4(1.0f);
 
@@ -1341,31 +1344,31 @@ void FiveCell::draw(GLuint skyboxProg, GLuint groundPlaneProg, GLuint soundObjPr
 
 	// draw ground plane-------------------------------------------------- 
 
-	glBindTexture(GL_TEXTURE_2D, groundTexture); 
+	//glBindTexture(GL_TEXTURE_2D, groundTexture); 
 
-	glBindVertexArray(groundVAO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, groundIndexBuffer); 
+	//glBindVertexArray(groundVAO);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, groundIndexBuffer); 
 
-	glUseProgram(groundPlaneProg);
+	//glUseProgram(groundPlaneProg);
 
-	glUniform3f(ground_lightDirLoc, m_vec3MoonDirection.x, m_vec3MoonDirection.y, m_vec3MoonDirection.z);
-	glUniform3f(ground_lightColourLoc, m_vec3MoonColour.x, m_vec3MoonColour.y, m_vec3MoonColour.z);
-	glUniform3f(ground_lightAmbientLoc, m_vec3MoonAmbient.x, m_vec3MoonAmbient.y, m_vec3MoonAmbient.z);
-	glUniform3f(ground_lightDiffuseLoc, m_vec3MoonDiffuse.x, m_vec3MoonDiffuse.y, m_vec3MoonDiffuse.z);
-	glUniform3f(ground_lightSpecularLoc, m_vec3MoonSpecular.x, m_vec3MoonSpecular.y, m_vec3MoonSpecular.z);
-	glUniform3f(ground_materialSpecularLoc, m_vec3GroundSpecular.x, m_vec3GroundSpecular.y, m_vec3GroundSpecular.z);
-	glUniform1f(ground_materialShininessLoc, m_fGroundShininess);
+	//glUniform3f(ground_lightDirLoc, m_vec3MoonDirection.x, m_vec3MoonDirection.y, m_vec3MoonDirection.z);
+	//glUniform3f(ground_lightColourLoc, m_vec3MoonColour.x, m_vec3MoonColour.y, m_vec3MoonColour.z);
+	//glUniform3f(ground_lightAmbientLoc, m_vec3MoonAmbient.x, m_vec3MoonAmbient.y, m_vec3MoonAmbient.z);
+	//glUniform3f(ground_lightDiffuseLoc, m_vec3MoonDiffuse.x, m_vec3MoonDiffuse.y, m_vec3MoonDiffuse.z);
+	//glUniform3f(ground_lightSpecularLoc, m_vec3MoonSpecular.x, m_vec3MoonSpecular.y, m_vec3MoonSpecular.z);
+	//glUniform3f(ground_materialSpecularLoc, m_vec3GroundSpecular.x, m_vec3GroundSpecular.y, m_vec3GroundSpecular.z);
+	//glUniform1f(ground_materialShininessLoc, m_fGroundShininess);
 
-	glUniformMatrix4fv(ground_projMatLoc, 1, GL_FALSE, &projMat[0][0]);
-	glUniformMatrix4fv(ground_viewMatLoc, 1, GL_FALSE, &viewEyeMat[0][0]);
-	glUniformMatrix4fv(ground_modelMatLoc, 1, GL_FALSE, &groundModelMatrix[0][0]);
-	glUniform3f(ground_cameraPosLoc, camPosPerEye.x, camPosPerEye.y, camPosPerEye.z);
+	//glUniformMatrix4fv(ground_projMatLoc, 1, GL_FALSE, &projMat[0][0]);
+	//glUniformMatrix4fv(ground_viewMatLoc, 1, GL_FALSE, &viewEyeMat[0][0]);
+	//glUniformMatrix4fv(ground_modelMatLoc, 1, GL_FALSE, &groundModelMatrix[0][0]);
+	//glUniform3f(ground_cameraPosLoc, camPosPerEye.x, camPosPerEye.y, camPosPerEye.z);
 
-	glDrawElements(GL_TRIANGLES, 12 * sizeof(unsigned int), GL_UNSIGNED_INT, (void*)0);
+	//glDrawElements(GL_TRIANGLES, 12 * sizeof(unsigned int), GL_UNSIGNED_INT, (void*)0);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	//glBindVertexArray(0);
+	//glBindTexture(GL_TEXTURE_2D, 0);
 
 	//draw menger sponge-----------------------------------------------------------------
 	float mengerAspect = raymarchData.aspect;
@@ -1397,6 +1400,9 @@ void FiveCell::draw(GLuint skyboxProg, GLuint groundPlaneProg, GLuint soundObjPr
 	glUniform3f(m_uiglCubeMaterialDiffuseLoc, m_vec3CubeDiffuse.x, m_vec3CubeDiffuse.y, m_vec3CubeDiffuse.z);
 	glUniform3f(m_uiglCubeMaterialSpecularLoc, m_vec3CubeSpecular.x, m_vec3CubeSpecular.y, m_vec3CubeSpecular.z);
 	glUniform1f(m_uiglCubeMaterialShininessLoc, m_fCubeShininess);
+
+	glUniform3f(m_uiglGroundPlaneSpecularLoc, m_vec3GroundSpecular.x, m_vec3GroundSpecular.y, m_vec3GroundSpecular.z);
+	glUniform1f(m_uiglGroundPlaneShininessLoc, m_fGroundShininess);
 	
 	glUniform1f(m_gliRandomSizeLocation, sizeVal);
 	glUniform1f(m_gliRMSModulateValLocation, modulateVal);
