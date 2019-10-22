@@ -4,6 +4,7 @@
 #define DO_REFLECTION 1
 #define DO_REFRACTION 1
 
+
 // refractive index of some common materials:
 // http://hyperphysics.phy-astr.gsu.edu/hbase/Tables/indrf.html
 #define REFRACTIVE_INDEX_OUTSIDE 1.00029
@@ -29,7 +30,9 @@ struct Material {
 };
 
 struct GroundMaterial {
-	sampler2D texture;
+	//sampler2D texture;
+	vec3 ambient;
+	vec3 diffuse;
 	vec3 specular;
 	float shininess;
 };
@@ -40,12 +43,18 @@ uniform GroundMaterial ground;
 
 const vec4 PLANE_NORMAL = vec4(0.0, 1.0, 0.0, 0.0);
 const int MAX_MARCHING_STEPS = 255;
-const float MIN_DIST = 0.0;
+const float MIN_DIST = 0.01;
 const float MAX_DIST = 100.0;
 const float EPSILON = 0.0001;
 const float GAMMA = 2.2;
 const float REFLECT_AMOUNT = 0.02;
 const float OBJ_SIZE = 1.0;
+const float NO_OBJECT = 0.0;
+const float PLANE_ID =  1.0;
+const float MANDEL_ID = 2.0;
+const float PENUMBRA_VAL = 16.0;
+
+float mandelDist, planeDist;
 
 uniform mat4 MVEPMat;
 
@@ -62,15 +71,18 @@ out vec4 fragColorOut;
 
 //----------------------------------------------------------------------------------------
 // Ground plane SDF from https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
+// Returns distance and object ID
 //----------------------------------------------------------------------------------------
 
 float planeSDF(vec3 pos, vec4 normal){
 
 	return dot(pos, normal.xyz) + normal.w;
+
 }
 
 //----------------------------------------------------------------------------------------
 // Mandelbulb SDF taken from https://www.shadertoy.com/view/tdtGRj
+// Returns distance and object ID
 //----------------------------------------------------------------------------------------
 float mandelbulbSDF(vec3 pos) {
 
@@ -98,20 +110,22 @@ float mandelbulbSDF(vec3 pos) {
 
 //----------------------------------------------------------------------------------------
 // Distance function for the whole scene
+// Returns distance and object ID
 //----------------------------------------------------------------------------------------
 float sceneSDF(vec3 pos){
 
-	//float dist = mandelbulbSDF(pos);
+	
+	mandelDist = mandelbulbSDF(pos + vec3(0.0, -1.8, 0.0));
 
-	float planeDist = planeSDF(pos, PLANE_NORMAL);
+	planeDist = planeSDF(pos, PLANE_NORMAL);
 
-	//return min(dist, planeDist);
-	return planeDist;
+	return min(mandelDist, planeDist);
+	//return planeDist;
 	
 }
 
 //----------------------------------------------------------------------------------------
-// * Return the shortest distance from the eyepoint to the scene surface along
+// * Return the shortest distance and object ID from the eyepoint to the scene surface along
 // * the marching direction. If no part of the surface is found between start and end,
 // * return end.
 // * 
@@ -120,46 +134,67 @@ float sceneSDF(vec3 pos){
 // * start: the starting distance away from the eye
 // * end: the max distance away from the ey to march before giving up
 //----------------------------------------------------------------------------------------
-float shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, float start, float end) {
+vec2 shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, float start, float end) {
 
+	float objID = 0.0;
     	float depth = start;
 
     	for (int i = 0; i < MAX_MARCHING_STEPS; i++) {
 
-		vec3 pointPos = vec3(0.0);
-
-		pointPos = eye + depth * marchingDirection;
+		vec3 pointPos = eye + depth * marchingDirection;
 			
 		float dist = sceneSDF(pointPos);
 
+		
         	if (dist < EPSILON) {
-			return depth;
+			
+			if(dist == mandelDist) {
+				objID = MANDEL_ID;
+			} else if(dist == planeDist){
+				objID = PLANE_ID;
+			}
+
+			return vec2(depth, objID);
         	}
 
         	depth += dist;
 
         	if (depth >= end) {
-        	    return end;
+        	    return vec2(end, NO_OBJECT);
         	}
 
 	}
 
-    	return end;
+    	return vec2(end, NO_OBJECT);
 }
 
 //----------------------------------------------------------------------------------------
 // Soft Shadow from https://www.iquilezles.org/www/articles/rmshadows/rmshadows.htm 
 //----------------------------------------------------------------------------------------
 
-float softShadow(vec3 rayOrigin, vec3 rayDirection, float min, float max){
+float softShadow(vec3 rayOrigin, vec3 rayDirection, float minDist, float maxDist, float penumbra){
 
-	for(int i = 0; i < MAX_MARCHING_STEPS; i++){
+	float depth = minDist;
+	float ph = 1e10;
 
-		float rayIntersect = shortestDistanceToSurface(rayOrigin, rayDirection, min, max);
-		if(rayIntersect < max) return 0.0; 
+	float retValue = 1.0;
+
+	for(int i = 0; i < 32; i++){
+
+		vec3 point = rayOrigin + rayDirection * depth;
+		float distance = mandelbulbSDF(point);	
+
+		if(distance < EPSILON) return 0.0; 
+		
+		depth += distance;
+
+		float y = distance*distance/(2.0 * ph);
+		float d = sqrt(distance * distance - y * y);
+		retValue = min(retValue, penumbra * d / max(0.0, depth - y));
+		//retValue = min(retValue, penumbra * distance / depth);
 	}
 
-	return 1.0;
+	return clamp(retValue, 0.0, 1.0);
 	
 }
 
@@ -231,6 +266,7 @@ float FresnelReflectAmount (float refIndOut, float refIndIn, vec3 normal, vec3 i
 //============================================================
 
 
+
 //============================================================
 // Returns the colour reflected or refracted from ray cast from
 // surface of an object
@@ -238,19 +274,21 @@ float FresnelReflectAmount (float refIndOut, float refIndIn, vec3 normal, vec3 i
 vec3 GetColourFromScene(in vec3 rayPosition, in vec3 rayDirection){
 
 	float dist = 0.0;
+	vec3 colour = vec3(0.0);
 	
-	float surfaceDist = shortestDistanceToSurface(rayPosition, rayDirection, MIN_DIST, MAX_DIST);
-	if(surfaceDist < MAX_DIST){
-		vec3 surfacePoint = rayPosition + rayDirection * surfaceDist;
+	vec2 surfaceDist = shortestDistanceToSurface(rayPosition, rayDirection, MIN_DIST, MAX_DIST);
+	if(surfaceDist.x < MAX_DIST){
+		vec3 surfacePoint = rayPosition + rayDirection * surfaceDist.x;
 		
-    		vec3 colour = phongIllumination(material.ambient, material.diffuse, material.specular, material.shininess, surfacePoint, rayPosition);
+    		colour = phongIllumination(material.ambient, material.diffuse, material.specular, material.shininess, surfacePoint, rayPosition);
+		//colour = rayColour(surfacePoint, rayPosition, rayDirection, MANDEL_ID);
 		return colour;
-	} else if(surfaceDist == MAX_DIST && rayDirection.y < 0.0){
+	} else if(surfaceDist.x == MAX_DIST && rayDirection.y < 0.0){
 
 		//calculate point of intersection with ground plane
 		// from https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-plane-and-ray-disk-intersection
 
-		vec3 groundNorm = vec3(0.0, -1.0, 0.0);
+		vec3 groundNorm = vec3(0.0, 1.0, 0.0);
 		vec3 pointOnPlane = vec3(0.0, 0.0, 0.0);
 		
 		float denom = dot(groundNorm, rayDirection);
@@ -259,9 +297,12 @@ vec3 GetColourFromScene(in vec3 rayPosition, in vec3 rayDirection){
 
 		vec3 intersectPoint = rayPosition + rayDirection * dist;
 
-		vec2 texCoords = vec2(intersectPoint.x, intersectPoint.z);
+		//vec2 texCoords = vec2(intersectPoint.x, intersectPoint.z);
 
-		return texture(ground.texture, texCoords).rgb;
+		//return texture(ground.texture, texCoords).rgb;
+		colour = phongIllumination(ground.ambient, ground.diffuse, ground.specular, ground.shininess, intersectPoint, rayPosition);
+
+		return colour;
 	}
 	
 	//else return skybox
@@ -289,17 +330,17 @@ vec3 GetObjectInternalRayColour(in vec3 rayPos, in vec3 rayDirection){
 		//then raymarch back from that point to find the back surface
 		vec3 extendedRayPos = rayPos + rayDirection * (OBJ_SIZE * 2);
 
-		float distance = shortestDistanceToSurface(extendedRayPos, -rayDirection, MIN_DIST, MAX_DIST);
+		vec2 distance = shortestDistanceToSurface(extendedRayPos, -rayDirection, MIN_DIST, MAX_DIST);
 
-		rayPos = extendedRayPos - rayDirection * distance;
+		rayPos = extendedRayPos - rayDirection * distance.x;
 
 		inNorm = estimateNormal(rayPos); 		
 		inNorm = -inNorm;
 
-		if(distance < 0.0) return returnVal;
+		if(distance.x < 0.0) return returnVal;
 
 		//calculate Beer's Law absorption
-		absorbDist += distance;
+		absorbDist += distance.x;
 		vec3 mixedColour = mix(OBJECT_ABSORB_COLOUR, OBJECT_ABSORB_COLOUR_2, 0.0);
 		vec3 absorbVal = exp(-mixedColour * absorbDist);
 
@@ -331,7 +372,7 @@ vec3 GetObjectInternalRayColour(in vec3 rayPos, in vec3 rayDirection){
 //---------------------------------------------------------------------------
 // Check what object the point intersects and return relevant colour
 //---------------------------------------------------------------------------
-vec3 rayColour(vec3 pos, vec3 rayOrigin, vec3 rayDirection){
+vec3 rayColour(vec3 pos, vec3 rayOrigin, vec3 rayDirection, float objID){
 
 	vec3 retCol = vec3(0.0);
 	vec3 K_a = vec3(0.0);
@@ -340,54 +381,68 @@ vec3 rayColour(vec3 pos, vec3 rayOrigin, vec3 rayDirection){
 	float shininess = 0.0;
 
 	//float planeIntersection = planeSDF(pos, PLANE_NORMAL); 
-	//if(planeIntersection <= EPSILON){
+	if(objID == PLANE_ID){
 
 		//vec3 normPos = normalize(pos);
-		K_a = texture(ground.texture, texCoordsOut).rgb;
-		K_d = texture(ground.texture, texCoordsOut).rgb;
+		//K_a = texture(ground.texture, texCoordsOut).rgb;
+		//K_d = texture(ground.texture, texCoordsOut).rgb;
+		//K_a = texture(ground.texture, normPos.xz).rgb;
+		//K_d = texture(ground.texture, normPos.xz).rgb;
 
+		K_a = ground.ambient;
+		K_d = ground.diffuse;
 		K_s = ground.specular;
 		shininess = ground.shininess;
 		
-		retCol += phongIllumination(K_a, K_d, K_s, shininess, pos, rayOrigin);
+		retCol = phongIllumination(K_a, K_d, K_s, shininess, pos, rayOrigin);
 		
-	//} else {
+		//calculate shadows	
+		vec3 normDir = normalize(-moonlight.direction);
+		float shadowVal = softShadow(pos, normDir, MIN_DIST, MAX_DIST, PENUMBRA_VAL);
+		vec3 shadow = pow(vec3(shadowVal), vec3(1.5, 1.2, 1.0));
 
-		//K_a = material.ambient;
-    		//K_d = material.diffuse;
-    		//K_s = material.specular;
-    		//shininess = material.shininess;
-		//
-		//retCol += phongIllumination(K_a, K_d, K_s, shininess, pos, rayOrigin);
+		retCol *= shadow;
+				
+	} else if(objID == MANDEL_ID){
 
-		//vec3 incidentNormal = estimateNormal(pos);
-		//vec3 returnVal = vec3(0.0);
+		K_a = material.ambient;
+    		K_d = material.diffuse;
+    		K_s = material.specular;
+    		shininess = material.shininess;
+		
+		retCol = phongIllumination(K_a, K_d, K_s, shininess, pos, rayOrigin);
 
-		////following demofox blog and shadertoy for reflection etc. https://www.shadertoy.com/view/4tyXDR and https://blog.demofox.org/2017/01/09/raytracing-reflection-refraction-fresnel-total-internal-reflection-and-beers-law/
+		vec3 incidentNormal = estimateNormal(pos);
+		vec3 returnVal = vec3(0.0);
 
-		////calculate how much to reflect or transmit
-		//float reflectionScaleVal = FresnelReflectAmount(REFRACTIVE_INDEX_OUTSIDE, REFRACTIVE_INDEX_INSIDE, incidentNormal, rayDirection);	
+		//following demofox blog and shadertoy for reflection etc. https://www.shadertoy.com/view/4tyXDR and https://blog.demofox.org/2017/01/09/raytracing-reflection-refraction-fresnel-total-internal-reflection-and-beers-law/
 
-		//float refractScaleVal = 1.0 - reflectionScaleVal;
+		//calculate how much to reflect or transmit
+		float reflectionScaleVal = FresnelReflectAmount(REFRACTIVE_INDEX_OUTSIDE, REFRACTIVE_INDEX_INSIDE, incidentNormal, rayDirection);	
 
-		////get reflection colour
-//#if DO_REFLECTIO//N
-		//vec3 reflectDirection = reflect(rayDirection, incidentNormal);
-		//returnVal += GetColourFromScene(pos + reflectDirection * 0.001, reflectDirection) * reflectionScaleVal;	
-//#endif
+		float refractScaleVal = 1.0 - reflectionScaleVal;
 
-		////get refraction colour
-//#if DO_REFRACTIO//N
-		//vec3 refractDirection = refract(rayDirection, incidentNormal, REFRACTIVE_INDEX_OUTSIDE / REFRACTIVE_INDEX_INSIDE);
-		//returnVal += GetObjectInternalRayColour(pos + refractDirection * 0.001, refractDirection) * refractScaleVal;		
-//#endif
+		//get reflection colour
+		#if DO_REFLECTION
+		vec3 reflectDirection = reflect(rayDirection, incidentNormal);
+		returnVal += GetColourFromScene(pos + reflectDirection * 0.001, reflectDirection) * reflectionScaleVal;	
+		#endif
 
-		//retCol += returnVal;
+		//get refraction colour
+		#if DO_REFRACTION
+		vec3 refractDirection = refract(rayDirection, incidentNormal, REFRACTIVE_INDEX_OUTSIDE / REFRACTIVE_INDEX_INSIDE);
+		returnVal += GetObjectInternalRayColour(pos + refractDirection * 0.001, refractDirection) * refractScaleVal;		
+		#endif
 
-	//}
-    
+		retCol += returnVal;
+
+	} else if(objID == NO_OBJECT){
+
+		retCol = vec3(0.0, 0.0, 0.0);
+	}
+
 	return retCol;
-} 
+}
 
 void main()
 {
@@ -401,25 +456,21 @@ void main()
 
 	//rayOrigin += vec3(0.0, -1.2, 0.0);
 
-    	float dist = shortestDistanceToSurface(rayOrigin, rayDir, MIN_DIST, MAX_DIST);
+    	vec2 dist = shortestDistanceToSurface(rayOrigin, rayDir, MIN_DIST, MAX_DIST);
     
-    	if (dist > MAX_DIST - EPSILON) {
+    	if (dist.x > MAX_DIST - EPSILON) {
         	// Didn't hit anything
         	fragColorOut = vec4(0.0, 0.0, 0.0, 0.0);
 			return;
     	}
 
     	// The closest point on the surface to the eyepoint along the view ray
-    	vec3 p = rayOrigin + dist * rayDir;
+    	vec3 p = rayOrigin + dist.x * rayDir;
 
 	vec3 colour = vec3(0.0);
 	vec3 shadow = vec3(0.0);
 
-	colour += rayColour(p, rayOrigin, rayDir);
-
-	//calculate shadows	
-	float shadowVal = softShadow(p, moonlight.direction, MIN_DIST, MAX_DIST);
-	shadow = vec3(shadowVal);
+	colour = rayColour(p, rayOrigin, rayDir, dist.y);
 
 	//gamma correction
 	vec3 fragColor = pow(colour, vec3(1.0 / GAMMA));

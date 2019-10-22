@@ -122,13 +122,15 @@ bool FiveCell::setup(std::string csd, GLuint skyboxProg, GLuint soundObjProg, GL
 	m_vec3MoonColour = glm::vec3(0.86f, 0.9f, 0.88f);
 	m_vec3MoonAmbient = glm::vec3(0.1f, 0.1f, 0.1f);
 	m_vec3MoonDiffuse = glm::vec3(0.1f, 0.1f, 0.1f);
-	m_vec3MoonSpecular = glm::vec3(0.5f, 0.5f, 0.5f);
+	m_vec3MoonSpecular = glm::vec3(1.0f, 1.0f, 1.0f);
 
 //**********************************************************
 // Material Properties
 //**********************************************************
 
 	//Ground
+	m_vec3GroundAmbient = glm::vec3(0.1f, 0.1f, 0.1f);
+	m_vec3GroundDiffuse = glm::vec3(0.2f, 0.2f, 0.2f);	
 	m_vec3GroundSpecular = glm::vec3(0.2f, 0.2f, 0.2f);
 	m_fGroundShininess = 16.0f;
 
@@ -1002,17 +1004,19 @@ bool FiveCell::BSetupRaymarchQuad(GLuint shaderProg)
 	glBindVertexArray(0);
 	glDisableVertexAttribArray(0);
 
-	m_uiglCubeMoonDirectionLoc = glGetUniformLocation(shaderProg, "moonlight.moonDir");
-	m_uiglCubeMoonColourLoc = glGetUniformLocation(shaderProg, "moonlight.moonColour");
-	m_uiglCubeMoonAmbientLoc = glGetUniformLocation(shaderProg, "moonlight.moonAmbient");
-	m_uiglCubeMoonDiffuseLoc = glGetUniformLocation(shaderProg, "moonlight.moonDiffuse");
-	m_uiglCubeMoonSpecularLoc = glGetUniformLocation(shaderProg, "moonlight.moonSpecular");
+	m_uiglCubeMoonDirectionLoc = glGetUniformLocation(shaderProg, "moonlight.direction");
+	m_uiglCubeMoonColourLoc = glGetUniformLocation(shaderProg, "moonlight.colour");
+	m_uiglCubeMoonAmbientLoc = glGetUniformLocation(shaderProg, "moonlight.ambient");
+	m_uiglCubeMoonDiffuseLoc = glGetUniformLocation(shaderProg, "moonlight.diffuse");
+	m_uiglCubeMoonSpecularLoc = glGetUniformLocation(shaderProg, "moonlight.specular");
 
-	m_uiglCubeMaterialAmbientLoc = glGetUniformLocation(shaderProg, "material.cubeAmbient");
-	m_uiglCubeMaterialDiffuseLoc = glGetUniformLocation(shaderProg, "material.cubeDiffuse");
-	m_uiglCubeMaterialSpecularLoc = glGetUniformLocation(shaderProg, "material.cubeSpecular");
-	m_uiglCubeMaterialShininessLoc = glGetUniformLocation(shaderProg, "material.cubeShininess");
+	m_uiglCubeMaterialAmbientLoc = glGetUniformLocation(shaderProg, "material.ambient");
+	m_uiglCubeMaterialDiffuseLoc = glGetUniformLocation(shaderProg, "material.diffuse");
+	m_uiglCubeMaterialSpecularLoc = glGetUniformLocation(shaderProg, "material.specular");
+	m_uiglCubeMaterialShininessLoc = glGetUniformLocation(shaderProg, "material.shininess");
 
+	m_uiglGroundPlaneAmbientLoc = glGetUniformLocation(shaderProg, "ground.ambient");
+	m_uiglGroundPlaneDiffuseLoc = glGetUniformLocation(shaderProg, "ground.diffuse");
 	m_uiglGroundPlaneSpecularLoc = glGetUniformLocation(shaderProg, "ground.specular");
 	m_uiglGroundPlaneShininessLoc = glGetUniformLocation(shaderProg, "ground.shininess");
 	
@@ -1401,6 +1405,8 @@ void FiveCell::draw(GLuint skyboxProg, GLuint groundPlaneProg, GLuint soundObjPr
 	glUniform3f(m_uiglCubeMaterialSpecularLoc, m_vec3CubeSpecular.x, m_vec3CubeSpecular.y, m_vec3CubeSpecular.z);
 	glUniform1f(m_uiglCubeMaterialShininessLoc, m_fCubeShininess);
 
+	glUniform3f(m_uiglGroundPlaneAmbientLoc, m_vec3GroundAmbient.x, m_vec3GroundAmbient.y, m_vec3GroundAmbient.z);
+	glUniform3f(m_uiglGroundPlaneDiffuseLoc, m_vec3GroundDiffuse.x, m_vec3GroundDiffuse.y, m_vec3GroundDiffuse.z);
 	glUniform3f(m_uiglGroundPlaneSpecularLoc, m_vec3GroundSpecular.x, m_vec3GroundSpecular.y, m_vec3GroundSpecular.z);
 	glUniform1f(m_uiglGroundPlaneShininessLoc, m_fGroundShininess);
 	
