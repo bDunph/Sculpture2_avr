@@ -121,7 +121,7 @@ bool FiveCell::setup(std::string csd, GLuint skyboxProg, GLuint soundObjProg, GL
 	m_vec3MoonDirection = glm::vec3(-0.2f, -1.0f, -0.3f);
 	m_vec3MoonColour = glm::vec3(0.86f, 0.9f, 0.88f);
 	m_vec3MoonAmbient = glm::vec3(0.1f, 0.1f, 0.1f);
-	m_vec3MoonDiffuse = glm::vec3(0.1f, 0.1f, 0.1f);
+	m_vec3MoonDiffuse = glm::vec3(0.5f, 0.5f, 0.5f);
 	m_vec3MoonSpecular = glm::vec3(1.0f, 1.0f, 1.0f);
 
 //**********************************************************
@@ -1321,30 +1321,30 @@ void FiveCell::draw(GLuint skyboxProg, GLuint groundPlaneProg, GLuint soundObjPr
 	camPosPerEye = glm::vec3(viewEyeMat[0][3], viewEyeMat[1][3], viewEyeMat[2][3]);
 	
 	//draw skybox--------------------------------------------------------------
-	glm::mat4 viewNoTranslation = glm::mat4(glm::mat3(viewEyeMat));
+	//glm::mat4 viewNoTranslation = glm::mat4(glm::mat3(viewEyeMat));
 
-	glDepthFunc(GL_LEQUAL);
-	glDepthMask(GL_FALSE);
-		
-	glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexID);
+	//glDepthFunc(GL_LEQUAL);
+	//glDepthMask(GL_FALSE);
+	//	
+	//glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexID);
 
-	glBindVertexArray(skyboxVAO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, skyboxIndexBuffer); 
+	//glBindVertexArray(skyboxVAO);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, skyboxIndexBuffer); 
 
-	glUseProgram(skyboxProg);
+	//glUseProgram(skyboxProg);
 
-	glUniformMatrix4fv(skybox_projMatLoc, 1, GL_FALSE, &projMat[0][0]);
-	glUniformMatrix4fv(skybox_viewMatLoc, 1, GL_FALSE, &viewNoTranslation[0][0]);
-	glUniformMatrix4fv(skybox_modelMatLoc, 1, GL_FALSE, &skyboxModelMatrix[0][0]);
-		
-	glDrawElements(GL_TRIANGLES, 36 * sizeof(unsigned int), GL_UNSIGNED_INT, (void*)0);
+	//glUniformMatrix4fv(skybox_projMatLoc, 1, GL_FALSE, &projMat[0][0]);
+	//glUniformMatrix4fv(skybox_viewMatLoc, 1, GL_FALSE, &viewNoTranslation[0][0]);
+	//glUniformMatrix4fv(skybox_modelMatLoc, 1, GL_FALSE, &skyboxModelMatrix[0][0]);
+	//	
+	//glDrawElements(GL_TRIANGLES, 36 * sizeof(unsigned int), GL_UNSIGNED_INT, (void*)0);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	//glBindVertexArray(0);
+	//glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
-	glDepthMask(GL_TRUE);
-	glDepthFunc(GL_LESS);
+	//glDepthMask(GL_TRUE);
+	//glDepthFunc(GL_LESS);
 
 	// draw ground plane-------------------------------------------------- 
 
