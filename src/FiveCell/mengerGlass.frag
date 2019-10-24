@@ -4,13 +4,12 @@
 #define DO_REFLECTION 1
 #define DO_REFRACTION 1
 
-
 // refractive index of some common materials:
 // http://hyperphysics.phy-astr.gsu.edu/hbase/Tables/indrf.html
 #define REFRACTIVE_INDEX_OUTSIDE 1.00029
 #define REFRACTIVE_INDEX_INSIDE  1.125
 
-#define MAX_RAY_BOUNCES 10 
+#define MAX_RAY_BOUNCES 4 
 #define OBJECT_ABSORB_COLOUR vec3(8.0, 8.0, 3.0)
 #define OBJECT_ABSORB_COLOUR_2 vec3(0.3, 9.0, 9.0)
 
@@ -31,6 +30,7 @@ struct Material {
 
 struct GroundMaterial {
 	//sampler2D texture;
+	vec3 colour;
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
@@ -75,10 +75,7 @@ out vec4 fragColorOut;
 //----------------------------------------------------------------------------------------
 
 float planeSDF(vec3 pos, vec4 normal){
-
-	pos.y += sin(pos.x)*0.1;
-	pos.y += sin(pos.z)*0.1;
-
+	
 	return dot(pos, normal.xyz) + normal.w;
 }
 
@@ -111,14 +108,22 @@ float mandelbulbSDF(vec3 pos) {
 
 //----------------------------------------------------------------------------------------
 // Distance function for the whole scene
-// Returns distance and object ID
 //----------------------------------------------------------------------------------------
 float sceneSDF(vec3 pos){
 
-	
 	mandelDist = mandelbulbSDF(pos + vec3(0.0, -1.8, 0.0));
 
-	planeDist = planeSDF(pos, PLANE_NORMAL);
+	vec3 newPos = pos;
+	float function1x = 0.09*sin(newPos.x*0.4)*newPos.x;
+	float function1z = 0.09*sin(newPos.z*0.4)*newPos.z;
+
+	float function2x = clamp(function1x, 0.0, 3.0);
+	float function2z = clamp(function1z, 0.0, 3.0);
+
+	newPos.y += function2x;
+	newPos.y += function2z;
+
+	planeDist = planeSDF(newPos, PLANE_NORMAL);	
 
 	return min(mandelDist, planeDist);
 	
@@ -172,10 +177,18 @@ vec2 shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, float start, fl
 //----------------------------------------------------------------------------------------
 vec3 fog(in vec3 col, in float dist, in vec3 rayDir, in vec3 lightDir){
 
-	float fogAmount = 1.0 - exp(-dist * 0.001);
+	//float fogAmount = 1.0 - exp(-dist * 0.02);
 	float lightAmount = max(dot(rayDir, lightDir), 0.0);
 	vec3 fogColour = mix(vec3(0.5, 0.6, 0.7), vec3(1.0, 0.9, 0.7), pow(lightAmount, 8.0));
-	return mix(col, fogColour, fogAmount);
+
+	vec3 bExt = vec3(0.2, 0.5, 0.1);
+	vec3 bIns = vec3(0.02, 0.015, 0.01);
+
+	vec3 extCol = vec3(exp(-dist * bExt.x), exp(-dist * bExt.y), exp(-dist * bExt.z));
+	vec3 insCol = vec3(exp(-dist * bIns.x), exp(-dist * bIns.y), exp(-dist * bIns.z));
+
+	return (col * (1.0 - extCol)) + (fogColour * insCol);
+	//return mix(col, fogColour, fogAmount);
 }
 
 //----------------------------------------------------------------------------------------
@@ -239,25 +252,40 @@ vec3 estimateNormal(vec3 p) {
 }
 //----------------------------------------------------------------------------------------
 
-vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float shininess, vec3 p, vec3 eye) {
+vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float shininess, vec3 matCol, vec3 p, vec3 eye) {
+
+	//calculate shadows	
+	vec3 normDir = normalize(-moonlight.direction);
+	float shadowVal = softShadow(p, normDir, MIN_DIST, MAX_DIST, PENUMBRA_VAL);
+	vec3 shadow = pow(vec3(shadowVal), vec3(1.0, 1.2, 1.5));
+
+	//*******Indirect Lighting (material and moonlight calculated together - next iteration I will separate according to https://www.iquilezles.org/www/articles/outdoorslighting/outdoorslighting.htm***********************//
+
+	// Lighting Terms
+	vec3 norm = estimateNormal(p);
+	float ambOcc = calcAO(p, norm); 
+	float sun = clamp(dot(norm,-moonlight.direction), 0.0, 1.0);
+	float sky = clamp(0.5 + 0.5 * norm.y, 0.0, 1.0);
+	float indirect = clamp(dot(norm, normalize(moonlight.direction * vec3(-1.0, 0.0, -1.0))), 0.0, 1.0);
+
+	//Compute Lighting
+	vec3 sunlight = sun * vec3(1.64, 1.27, 0.99) * shadow;
+	vec3 skylight = sky * vec3(0.16, 0.2, 0.28) * ambOcc;
+	vec3 indirectLight = indirect * vec3(0.2, 0.28, 0.4) * ambOcc;
 
 	//ambient
-	//vec3 ambient = moonlight.ambient * moonlight.colour * k_a;
-	vec3 ambient = k_a;
+	vec3 ambient = matCol * k_a * (skylight + indirectLight);
 
    	//diffuse
-	vec3 normal = estimateNormal(p);
 	vec3 lightDirection = normalize(-moonlight.direction);
-	float diffAngle = max(dot(normal, lightDirection), 0.0);
-	//vec3 diffuse = moonlight.colour * moonlight.diffuse * diffAngle * k_d;
-	vec3 diffuse = diffAngle * k_d;
+	float diffAngle = max(dot(norm, lightDirection), 0.0);
+	vec3 diffuse = diffAngle * k_d * (sunlight + skylight + indirectLight);
   
 	//specular
 	vec3 viewDir = normalize(eye - p);
 	vec3 halfwayVector = normalize(lightDirection + viewDir);
-	float specularAngle = pow(max(dot(normal, halfwayVector), 0.0), shininess);	  	
-	//vec3 specular = moonlight.colour * moonlight.specular * (specularAngle * k_s);
-	vec3 specular = specularAngle * k_s;
+	float specularAngle = pow(max(dot(norm, halfwayVector), 0.0), shininess);	  	
+	vec3 specular = specularAngle * k_s * (sunlight + skylight + indirectLight);
 
 	vec3 colour = ambient + diffuse + specular;
 	
@@ -307,6 +335,7 @@ vec3 GetColourFromScene(in vec3 rayPosition, in vec3 rayDirection){
 
 	float dist = 0.0;
 	vec3 colour = vec3(0.0);
+	vec3 matColour = vec3(0.0);
 	vec3 amb = vec3(0.0);
 	vec3 diff = vec3(0.0);
 	vec3 spec = vec3(0.0);
@@ -317,23 +346,26 @@ vec3 GetColourFromScene(in vec3 rayPosition, in vec3 rayDirection){
 		vec3 surfacePoint = rayPosition + rayDirection * surfaceDist.x;
 		
 		if(surfaceDist.y == PLANE_ID){
+			matColour = ground.colour;
 			amb = ground.ambient;
 			diff = ground.diffuse;
 			spec = ground.specular;
 			shine = ground.shininess;
 		} else if(surfaceDist.y == MANDEL_ID){
+			matColour = vec3(1.0, 1.0, 1.0);
 			amb = material.ambient;
 			diff = material.diffuse;
 			spec = material.specular;
 			shine = material.shininess;
 		} else if(surfaceDist.y == NO_OBJECT){
-			amb = vec3(0.1, 0.1, 0.1) * SKY_COL;
-			diff = vec3(0.1, 0.1, 0.1) * SKY_COL;
-			spec = vec3(1.0, 1.0, 1.0) * SKY_COL;
-			shine = 16.0;
+			matColour = vec3(SKY_COL);
+			amb = vec3(0.1, 0.1, 0.1);
+			diff = vec3(0.1, 0.1, 0.1);
+			spec = vec3(1.0, 1.0, 1.0);
+			shine = 2.0;
 		} 
 			 
-    		colour = phongIllumination(amb, diff, spec, shine, surfacePoint, rayPosition);
+    		colour = phongIllumination(amb, diff, spec, shine, matColour,  surfacePoint, rayPosition);
 		return colour; 
 
 		//colour = rayColour(surfacePoint, rayPosition, rayDirection, MANDEL_ID);
@@ -377,6 +409,12 @@ vec3 GetObjectInternalRayColour(in vec3 rayPos, in vec3 rayDirection){
 	vec3 inNorm = vec3(0.0);
 	float distance = 0.0;
 
+	vec3 matColour = vec3(0.0);
+	vec3 amb = vec3(0.0);
+	vec3 diff = vec3(0.0);
+	vec3 spec = vec3(0.0);
+	float shine = 0.0;
+
 	for(int i = 0; i < MAX_RAY_BOUNCES; ++i){
 
 		vec3 rayOrigin = rayPos;
@@ -406,9 +444,29 @@ vec3 GetObjectInternalRayColour(in vec3 rayPos, in vec3 rayDirection){
 		//add in refraction outside of the object
 		vec3 refractDirection = refract(rayDirection, inNorm, REFRACTIVE_INDEX_INSIDE / REFRACTIVE_INDEX_OUTSIDE);
 		returnVal += GetColourFromScene(rayPos + refractDirection * 0.001, refractDirection) * refractMult * multiplier * absorbVal;
+			
+		if(distance.y == PLANE_ID){
+			matColour = ground.colour;
+			amb = ground.ambient;
+			diff = ground.diffuse;
+			spec = ground.specular;
+			shine = ground.shininess;
+		} else if(distance.y == MANDEL_ID){
+			matColour = vec3(1.0, 1.0, 1.0);
+			amb = material.ambient;
+			diff = material.diffuse;
+			spec = material.specular;
+			shine = material.shininess;
+		} else if(distance.y == NO_OBJECT){
+			matColour = vec3(SKY_COL);
+			amb = vec3(0.1, 0.1, 0.1);
+			diff = vec3(0.1, 0.1, 0.1);
+			spec = vec3(1.0, 1.0, 1.0);
+			shine = 2.0;
+		}
 
 		//add specular highlight based on refracted ray direction
-		//returnVal += phongIllumination(material.ambient, material.diffuse, material.specular, material.shininess, rayPos, rayOrigin) * refractMult * multiplier * absorbVal;
+		returnVal += phongIllumination(amb, diff, spec, shine, matColour, rayPos, rayOrigin) * refractMult * multiplier * absorbVal;
 		
 		//follow ray down internal reflection path
 		rayDirection = reflect(rayDirection, inNorm);
@@ -430,6 +488,7 @@ vec3 GetObjectInternalRayColour(in vec3 rayPos, in vec3 rayDirection){
 vec3 rayColour(vec3 pos, vec3 rayOrigin, vec3 rayDirection, float objID){
 
 	vec3 retCol = vec3(0.0);
+	vec3 matColour = vec3(0.0);
 	vec3 K_a = vec3(0.0);
 	vec3 K_d = vec3(0.0);
 	vec3 K_s = vec3(0.0);
@@ -443,21 +502,23 @@ vec3 rayColour(vec3 pos, vec3 rayOrigin, vec3 rayDirection, float objID){
 		//K_a = texture(ground.texture, normPos.xz).rgb;
 		//K_d = texture(ground.texture, normPos.xz).rgb;
 
+		matColour = ground.colour;
 		K_a = ground.ambient;
 		K_d = ground.diffuse;
 		K_s = ground.specular;
 		shininess = ground.shininess;
 		
-		retCol = phongIllumination(K_a, K_d, K_s, shininess, pos, rayOrigin);
+		retCol = phongIllumination(K_a, K_d, K_s, shininess, matColour, pos, rayOrigin);
 		
 	} else if(objID == MANDEL_ID){
 
+		matColour = vec3(1.0);
 		K_a = material.ambient;
     		K_d = material.diffuse;
     		K_s = material.specular;
     		shininess = material.shininess;
 		
-		retCol = phongIllumination(K_a, K_d, K_s, shininess, pos, rayOrigin);
+		retCol = phongIllumination(K_a, K_d, K_s, shininess, matColour, pos, rayOrigin);
 
 		vec3 incidentNormal = estimateNormal(pos);
 		vec3 returnVal = vec3(0.0);
@@ -485,7 +546,14 @@ vec3 rayColour(vec3 pos, vec3 rayOrigin, vec3 rayDirection, float objID){
 
 	} else if(objID == NO_OBJECT){
 
-		retCol = SKY_COL;
+		//matColour = SKY_COL;
+		//K_a = vec3(0.2);
+		//K_d = vec3(0.2);
+		//K_s = vec3(0.0);
+		//shininess = 0.0;
+
+		//retCol = phongIllumination(K_a, K_d, K_s, shininess, matColour, pos, rayOrigin);
+		retCol = vec3(0.16, 0.2, 0.28);
 	}
 
 	
@@ -498,60 +566,30 @@ void main()
 
 	//************* code from https://encreative.blogspot.com/2019/05/computing-ray-origin-and-direction-from.html ************//
 
+
+	//******* Perform raymarch *********************//
 	vec3 rayOrigin = nearPos.xyz / nearPos.w;
 	vec3 rayEnd = farPos.xyz / farPos.w;
 	vec3 rayDir = rayEnd - rayOrigin;
 	rayDir = normalize(rayDir);	
 
-	//rayOrigin += vec3(0.0, -1.2, 0.0);
-
+	// Get distance to nearest surface and object ID
     	vec2 dist = shortestDistanceToSurface(rayOrigin, rayDir, MIN_DIST, MAX_DIST);
     
-	vec3 colour = vec3(0.0);
-	//vec3 shadow = vec3(0.0);
-
-    	//if (dist.x > MAX_DIST - EPSILON) {
-        //	// Didn't hit anything
-        //	//fragColorOut = vec4(0.0, 0.0, 0.0, 0.0);
-        //	colour = moonlight.colour;
-	//		//return;
-    	//}
-
     	// The closest point on the surface to the eyepoint along the view ray
     	vec3 p = rayOrigin + dist.x * rayDir;
 
-	//Material Colour	
-	colour = rayColour(p, rayOrigin, rayDir, dist.y);
+	//************* Colour Calculations ****************//
 
-	//calculate shadows	
-	vec3 normDir = normalize(-moonlight.direction);
-	float shadowVal = softShadow(p, normDir, MIN_DIST, MAX_DIST, PENUMBRA_VAL);
-	vec3 shadow = pow(vec3(shadowVal), vec3(1.0, 1.2, 1.5));
-
-
-	//*******Indirect Lighting (material and moonlight calculated together - next iteration I will separate according to https://www.iquilezles.org/www/articles/outdoorslighting/outdoorslighting.htm***********************//
-
-	// Lighting Terms
-	vec3 norm = estimateNormal(p);
-	float ambOcc = calcAO(p, norm); 
-	float sun = clamp(dot(norm,moonlight.direction), 0.0, 1.0);
-	float sky = clamp(0.5 + 0.5 * norm.y, 0.0, 1.0);
-	float indirect = clamp(dot(norm, normalize(moonlight.direction * vec3(-1.0, 0.0, -1.0))), 0.0, 1.0);
-
- 
-	//Compute Lighting
-	//vec3 lighting = sun * vec3(1.64, 1.27, 0.99) * pow(vec3(colour), vec3(1.0, 1.2, 1.5));
-	vec3 lighting = sun * vec3(1.64, 1.27, 0.99) * shadow;
-	lighting += sky * vec3(0.16, 0.2, 0.28) * ambOcc;
-	lighting += indirect * vec3(0.2, 0.28, 0.4) * ambOcc;
-
-	colour *= lighting;
+	vec3 colour = rayColour(p, rayOrigin, rayDir, dist.y);
 
 	//Apply fog
-	colour = fog(colour, dist.x, rayDir, moonlight.direction);
+	colour = fog(colour, dist.x, rayDir, -moonlight.direction);
 
 	//gamma correction
 	vec3 fragColor = pow(colour, vec3(1.0 / GAMMA));
+
+	// Final Colour
     	fragColorOut = vec4(fragColor, 1.0);
 
 //-----------------------------------------------------------------------------

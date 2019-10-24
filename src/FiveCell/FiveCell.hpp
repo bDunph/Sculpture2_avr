@@ -175,6 +175,7 @@ private:
 	GLuint m_uiglCubeMaterialSpecularLoc;
 	GLuint m_uiglCubeMaterialShininessLoc;
 
+	GLuint m_uiglGroundPlaneColourLoc;
 	GLuint m_uiglGroundPlaneAmbientLoc;
 	GLuint m_uiglGroundPlaneDiffuseLoc;
 	GLuint m_uiglGroundPlaneSpecularLoc;
@@ -227,6 +228,7 @@ private:
 	glm::vec3 m_vec3MoonSpecular;
 	
 	//material properties
+	glm::vec3 m_vec3GroundColour;
 	glm::vec3 m_vec3GroundAmbient;
 	glm::vec3 m_vec3GroundDiffuse;
 	glm::vec3 m_vec3GroundSpecular;

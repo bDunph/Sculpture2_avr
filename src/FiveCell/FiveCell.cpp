@@ -129,10 +129,11 @@ bool FiveCell::setup(std::string csd, GLuint skyboxProg, GLuint soundObjProg, GL
 //**********************************************************
 
 	//Ground
+	m_vec3GroundColour = glm::vec3(0.761f, 0.698f, 0.502f);
 	m_vec3GroundAmbient = glm::vec3(0.1f, 0.1f, 0.1f);
 	m_vec3GroundDiffuse = glm::vec3(0.2f, 0.2f, 0.2f);	
 	m_vec3GroundSpecular = glm::vec3(0.2f, 0.2f, 0.2f);
-	m_fGroundShininess = 16.0f;
+	m_fGroundShininess = 8.0f;
 
 	//Cube
 	m_vec3CubeAmbient = glm::vec3(0.1f, 0.1f, 0.1f);
@@ -1015,6 +1016,7 @@ bool FiveCell::BSetupRaymarchQuad(GLuint shaderProg)
 	m_uiglCubeMaterialSpecularLoc = glGetUniformLocation(shaderProg, "material.specular");
 	m_uiglCubeMaterialShininessLoc = glGetUniformLocation(shaderProg, "material.shininess");
 
+	m_uiglGroundPlaneColourLoc = glGetUniformLocation(shaderProg, "ground.colour");
 	m_uiglGroundPlaneAmbientLoc = glGetUniformLocation(shaderProg, "ground.ambient");
 	m_uiglGroundPlaneDiffuseLoc = glGetUniformLocation(shaderProg, "ground.diffuse");
 	m_uiglGroundPlaneSpecularLoc = glGetUniformLocation(shaderProg, "ground.specular");
@@ -1405,6 +1407,7 @@ void FiveCell::draw(GLuint skyboxProg, GLuint groundPlaneProg, GLuint soundObjPr
 	glUniform3f(m_uiglCubeMaterialSpecularLoc, m_vec3CubeSpecular.x, m_vec3CubeSpecular.y, m_vec3CubeSpecular.z);
 	glUniform1f(m_uiglCubeMaterialShininessLoc, m_fCubeShininess);
 
+	glUniform3f(m_uiglGroundPlaneColourLoc, m_vec3GroundColour.x, m_vec3GroundColour.y, m_vec3GroundColour.z);
 	glUniform3f(m_uiglGroundPlaneAmbientLoc, m_vec3GroundAmbient.x, m_vec3GroundAmbient.y, m_vec3GroundAmbient.z);
 	glUniform3f(m_uiglGroundPlaneDiffuseLoc, m_vec3GroundDiffuse.x, m_vec3GroundDiffuse.y, m_vec3GroundDiffuse.z);
 	glUniform3f(m_uiglGroundPlaneSpecularLoc, m_vec3GroundSpecular.x, m_vec3GroundSpecular.y, m_vec3GroundSpecular.z);
