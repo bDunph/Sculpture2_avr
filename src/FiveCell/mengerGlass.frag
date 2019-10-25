@@ -94,7 +94,7 @@ float mandelbulbSDF(vec3 pos) {
     	    	if (r>1.5) break;
     	    	theta = acos((z.y/r) + (0.01 *  sineControlVal));
     	    	//theta = acos(z.y/r);
-    	    	phi = atan(z.z,z.x);
+    	    	phi = atan(z.z,z.x) * (1 + (2 * sineControlVal));
     	    	dr =  pow( r, Power-1.0)*Power*dr + 1.0;
     	    	theta *= Power;
     	    	phi *= Power;
@@ -120,8 +120,8 @@ float sceneSDF(vec3 pos){
 	float function2x = clamp(function1x, 0.0, 3.0);
 	float function2z = clamp(function1z, 0.0, 3.0);
 
-	newPos.y += function2x;
-	newPos.y += function2z;
+	newPos.y += function2x + 1.5;
+	newPos.y += function2z + 1.5;
 
 	planeDist = planeSDF(newPos, PLANE_NORMAL);	
 
@@ -177,17 +177,23 @@ vec2 shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, float start, fl
 //----------------------------------------------------------------------------------------
 vec3 fog(in vec3 col, in float dist, in vec3 rayDir, in vec3 lightDir){
 
-	//float fogAmount = 1.0 - exp(-dist * 0.02);
-	float lightAmount = max(dot(rayDir, lightDir), 0.0);
-	vec3 fogColour = mix(vec3(0.5, 0.6, 0.7), vec3(1.0, 0.9, 0.7), pow(lightAmount, 8.0));
+	//float fogAmount = 1.0 - exp(-dist * 0.2);
+	vec3 normLightDir = normalize(-lightDir);
+	float expDistTerm = exp(dot(rayDir, normLightDir));
+	float lightAmount = max(expDistTerm * 0.6, 0.0);
+	vec3 fogColour = mix(vec3(0.5, 0.6, 0.7), vec3(1.0, 0.9, 0.7), pow(lightAmount, 10.0));
 
-	vec3 bExt = vec3(0.2, 0.5, 0.1);
-	vec3 bIns = vec3(0.02, 0.015, 0.01);
+	vec3 bExt = vec3(0.05, 0.03, 0.09);
+	vec3 bIns = vec3(0.12, 0.05, 0.05);
 
 	vec3 extCol = vec3(exp(-dist * bExt.x), exp(-dist * bExt.y), exp(-dist * bExt.z));
 	vec3 insCol = vec3(exp(-dist * bIns.x), exp(-dist * bIns.y), exp(-dist * bIns.z));
 
-	return (col * (1.0 - extCol)) + (fogColour * insCol);
+	//float extCol = exp(-dist * 0.02);
+	//float insCol = exp(-dist * 0.04);
+
+	//return col += vec3(col * (vec3(1.0) - extCol) + fogColour * (vec3(1.0) - insCol));
+	return vec3(col * (vec3(1.0) - extCol) + fogColour * (vec3(1.0) - insCol));
 	//return mix(col, fogColour, fogAmount);
 }
 
@@ -502,13 +508,16 @@ vec3 rayColour(vec3 pos, vec3 rayOrigin, vec3 rayDirection, float objID){
 		//K_a = texture(ground.texture, normPos.xz).rgb;
 		//K_d = texture(ground.texture, normPos.xz).rgb;
 
-		matColour = ground.colour;
-		K_a = ground.ambient;
-		K_d = ground.diffuse;
-		K_s = ground.specular;
-		shininess = ground.shininess;
+		//matColour = ground.colour;
+		//matColour = vec3(0.0, 0.0, 0.0);
+		//K_a = ground.ambient;
+		//K_a = vec3(0.0, 0.0, 0.0);
+		//K_d = ground.diffuse;
+		//K_s = ground.specular;
+		//shininess = ground.shininess;
 		
-		retCol = phongIllumination(K_a, K_d, K_s, shininess, matColour, pos, rayOrigin);
+		//retCol = phongIllumination(K_a, K_d, K_s, shininess, matColour, pos, rayOrigin);
+		retCol = vec3(0.0, 0.0, 0.0);
 		
 	} else if(objID == MANDEL_ID){
 
@@ -584,7 +593,9 @@ void main()
 	vec3 colour = rayColour(p, rayOrigin, rayDir, dist.y);
 
 	//Apply fog
-	colour = fog(colour, dist.x, rayDir, -moonlight.direction);
+	colour += 0.5 * (fog(colour, dist.x, rayDir, moonlight.direction));
+
+	colour = clamp(colour, 0.0, 1.0);
 
 	//gamma correction
 	vec3 fragColor = pow(colour, vec3(1.0 / GAMMA));

@@ -84,7 +84,7 @@ kFreqScale chnget "randFreq" ; random frequency scale value sent from applicatio
 
 ; bow excitator-------------------------------------
 
-kamp = ampdbfs(-3) * (0.01 * kSineControlVal)
+kamp = ampdbfs(-1) * (0.01 * kSineControlVal)
 kfreq = 55 
 kpres = 2
 krat = 0.127236
@@ -107,11 +107,12 @@ ares3	mode	aexc,	935,	500
 
 ares4	mode	aexc,	1458.6,	520
 
-ares5	mode	aexc,	2063.6,	540
+ares5	mode	aexc,	2063.6,	540 - (kSineControlVal * 100)
 
 ares	sum	ares1,	ares2,	ares3,	ares4,	ares5
 
-gaOut1 = (aexc + ares) * kSineControlVal 
+;gaOut1 = (aexc + ares) * kSineControlVal 
+gaOut1 = aexc + ares
 	;outs	gaOut1,	gaOut1
 
 ;kRms	rms	gaOut1

@@ -129,7 +129,9 @@ bool FiveCell::setup(std::string csd, GLuint skyboxProg, GLuint soundObjProg, GL
 //**********************************************************
 
 	//Ground
-	m_vec3GroundColour = glm::vec3(0.761f, 0.698f, 0.502f);
+	//m_vec3GroundColour = glm::vec3(0.761f, 0.698f, 0.502f);
+	//m_vec3GroundColour = glm::vec3(0.58f, 0.32f, 0.13f);
+	m_vec3GroundColour = glm::vec3(0.0f, 0.0f, 0.0f);
 	m_vec3GroundAmbient = glm::vec3(0.1f, 0.1f, 0.1f);
 	m_vec3GroundDiffuse = glm::vec3(0.2f, 0.2f, 0.2f);	
 	m_vec3GroundSpecular = glm::vec3(0.2f, 0.2f, 0.2f);
