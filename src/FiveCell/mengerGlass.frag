@@ -1,6 +1,6 @@
 #version 410
 
-#define DO_FRESNEL 1
+#define DO_FRESNEL 0
 #define DO_REFLECTION 1
 #define DO_REFRACTION 1
 
@@ -92,9 +92,10 @@ float mandelbulbSDF(vec3 pos) {
     	    for (int i = 0; i < 3; i++) {
     	    	r = length(z);
     	    	if (r>1.5) break;
-    	    	theta = acos((z.y/r) + (0.01 *  sineControlVal));
-    	    	//theta = acos(z.y/r);
+    	    	//theta = acos((z.y/r) + (0.01 *  sineControlVal));
+    	    	theta = acos(z.y/r);
     	    	phi = atan(z.z,z.x) * (1 + (2 * sineControlVal));
+    	    	//phi = atan(z.z,z.x);
     	    	dr =  pow( r, Power-1.0)*Power*dr + 1.0;
     	    	theta *= Power;
     	    	phi *= Power;

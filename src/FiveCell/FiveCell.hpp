@@ -152,6 +152,7 @@ private:
 	MYFLT* randomFrequencyVal;
 	MYFLT* m_pRmsOut;
 	MYFLT* m_cspSineControlVal;
+	MYFLT* m_cspMandelEscapeVal;
 
 	//raymarching quad
 	unsigned int m_uiNumSceneVerts;
@@ -241,7 +242,6 @@ private:
 
 	//control variables
 	float sineControlVal;
-
 
 };
 #endif

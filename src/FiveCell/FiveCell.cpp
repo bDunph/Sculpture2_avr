@@ -74,6 +74,11 @@ bool FiveCell::setup(std::string csd, GLuint skyboxProg, GLuint soundObjProg, GL
 		return false;
 	}
 
+	const char* mandelEscapeVal = "mandelEscapeVal";
+	if(session->GetChannelPtr(m_cspMandelEscapeVal, mandelEscapeVal, CSOUND_INPUT_CHANNEL | CSOUND_CONTROL_CHANNEL) != 0){
+		std::cout << "GetChannelPtr could not get the mandelEscapeVal value" << std::endl;
+		return false;
+	}
 //********* output values from csound to avr *******************//
 
 	const char* rmsOut = "rmsOut";
@@ -1144,7 +1149,66 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 
 	*m_cspSineControlVal = (MYFLT)sineControlVal;
 
-//*********************************************************************************************
+	//calculate r values of mandelbulb along ray-------------------
+
+	//create ray values	
+	glm::vec2 ndcRayPos = glm::vec2(0.0f, 0.0f);
+
+	glm::vec4 nearRayPos = inverseMVEPMat * glm::vec4(ndcRayPos.x, ndcRayPos.y, -1.0f, 1.0f);
+	glm::vec4 farRayPos = inverseMVEPMat * glm::vec4(ndcRayPos.x, ndcRayPos.y, 1.0f, 1.0f);	
+
+	glm::vec3 rayOrigin = glm::vec3(nearRayPos.x / nearRayPos.w, nearRayPos.y / nearRayPos.w, nearRayPos.z / nearRayPos.w);
+	glm::vec3 rayEndPoint = glm::vec3(farRayPos.x / farRayPos.w, farRayPos.y / farRayPos.w, farRayPos.z / farRayPos.w);
+	glm::vec3 rayDirection = rayEndPoint - rayOrigin;
+	rayDirection = glm::normalize(rayDirection);	
+
+	//march positions along ray
+	int maxSteps = 255;
+	float start = 0.0;
+	float step = 1.0f;
+	int iterations = 5;
+	glm::vec3 position = rayOrigin;	
+	float power = 2.0f;
+	float dr = 1.0f;
+	float theta = 0.0f;
+	float phi = 0.0f;
+	float r = 0.0f;
+
+	for(int i = 0; i < maxSteps; i++){
+
+		r = glm::length(position); 			
+	
+		if(r > 1.5f){
+	
+			//value to CSound
+			*m_cspMandelEscapeVal = (MYFLT)r;	
+
+		} else if(r <= 1.5f){
+
+			glm::vec3 z = position;	
+
+			for(int j = 0; j < iterations; j++){
+
+				// mandelbulb formula adapted from 
+				// https://www.shadertoy.com/view/tdtGRj
+				r = length(z);
+				if(r > 1.5f) break;
+				theta = acos(z.y / r);
+				phi = atan2(z.z, z.x) * (1 + (2 * sineControlVal));
+				dr = pow(r, power - 1.0f) * power * dr + 1.0f;
+				theta *= power;
+				phi *= power;
+				z = pow(r, power) * glm::vec3(sin(theta) * cos(phi), cos(theta), sin(phi) * sin(theta)) + position;
+			}
+
+			//value to CSound
+			*m_cspMandelEscapeVal = (MYFLT)r;
+		}
+
+		position += (rayOrigin + step * rayDirection);
+	}	
+
+
 // Machine Learning 
 //*********************************************************************************************
 	bool currentRandomState = m_bPrevRandomState;

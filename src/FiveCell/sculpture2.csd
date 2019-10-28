@@ -50,7 +50,7 @@ kdepth = 0.99 + (0.01 * kSineControlVal)
 fmask	pvsmaska	fsig,	ifn,	kdepth		
 
 aOut0	pvsynth	fmask
-	outs	aOut0,	aOut0
+	outs	aOut0 * 0.8,	aOut0 * 0.8
 
 endin
 
@@ -61,9 +61,9 @@ instr 2 ; Modal Instrument
 ; get control value from application
 kSineControlVal	chnget	"sineControlVal"
 
-iamp    init ampdbfs(-3)
+iamp    init ampdbfs(-1)
 
-kFreqScale chnget "randFreq" ; random frequency scale value sent from application
+;kFreqScale chnget "randFreq" ; random frequency scale value sent from application
 
 ; mallet excitator----------------------------------
 
@@ -84,12 +84,12 @@ kFreqScale chnget "randFreq" ; random frequency scale value sent from applicatio
 
 ; bow excitator-------------------------------------
 
-kamp = ampdbfs(-1) * (0.01 * kSineControlVal)
+kamp = ampdbfs(-3) - (0.01 * kSineControlVal)
 kfreq = 55 
 kpres = 2
 krat = 0.127236
 kvibf = 3
-kvamp = ampdbfs(-6);ampdbfs(-5.995) + (0.01 * kSineControlVal)
+kvamp = ampdbfs(-3);ampdbfs(-5.995) + (0.01 * kSineControlVal)
 
 aexc	wgbow	kamp,	kfreq,	kpres,	krat,	kvibf,	kvamp
 
@@ -121,6 +121,43 @@ gaOut1 = aexc + ares
 endin
 
 ;**************************************************************************************
+instr 3 ; Real-time Spectral Instrument - Mandelbulb Formula Sonification 
+;**************************************************************************************
+
+; get control value from application
+;kSineControlVal	chnget	"sineControlVal"
+kMandelEscapeVal	chnget	"mandelEscapeVal"
+
+ifftsize = 2048
+ioverlap = ifftsize / 4
+iwinsize = ifftsize * 2
+iwinshape = 0
+
+; route output from instrument 2 above to pvsanal
+fsig	pvsanal	gaOut1,	ifftsize,	ioverlap,	iwinsize,	iwinshape
+
+; get info from pvsanal and print
+ioverlap,	inbins,	iwindowsize,	iformat	pvsinfo	fsig
+print	ioverlap,	inbins,	iwindowsize,	iformat		
+
+;inoscs = 250
+;kfmod = 0.5 * kSineControlVal
+;ibinoffset = 2
+;ibinincr = 4
+
+;gaOut	pvsadsyn	fsig,	inoscs,	kfmod,	ibinoffset,	ibinincr
+
+ifn = 1
+kdepth = 0.5 + kMandelEscapeVal 
+
+fmask	pvsmaska	fsig,	ifn,	kdepth		
+
+gaOut2	pvsynth	fmask
+	;outs	aOut0,	aOut0
+
+endin
+
+;**************************************************************************************
 instr 12 ; Hrtf Instrument
 ;**************************************************************************************
 kPortTime linseg 0.0, 0.001, 0.05 
@@ -131,7 +168,7 @@ kDistanceVal chnget "distance"
 kDist portk kDistanceVal, kPortTime ;to filter out audio artifacts due to the distance changing too quickly
 
 ;asig	sum	gaOut0,	gaOut1
-asig = gaOut1
+asig = gaOut2
 
 aLeftSig, aRightSig  hrtfmove2	asig, kAzimuthVal, kElevationVal, "hrtf-48000-left.dat", "hrtf-48000-right.dat", 4, 9.0, 48000
 aLeftSig = aLeftSig / (kDist + 0.00001)
@@ -160,6 +197,8 @@ f1	0	1025	8	0	2	1	3	0	4	1	6	0	10	1	12	0	16	1	32	0	1	0	939	0
 i1	2	10000
 
 i2	2	10000
+
+i3	2	10000
 
 i12	2	10000
 
