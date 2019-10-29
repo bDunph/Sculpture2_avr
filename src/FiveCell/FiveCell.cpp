@@ -1152,63 +1152,78 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 	//calculate r values of mandelbulb along ray-------------------
 
 	//create ray values	
-	glm::vec2 ndcRayPos = glm::vec2(0.0f, 0.0f);
+	//glm::vec2 ndcRayPos = glm::vec2(0.0f, 0.0f);
 
-	glm::vec4 nearRayPos = inverseMVEPMat * glm::vec4(ndcRayPos.x, ndcRayPos.y, -1.0f, 1.0f);
-	glm::vec4 farRayPos = inverseMVEPMat * glm::vec4(ndcRayPos.x, ndcRayPos.y, 1.0f, 1.0f);	
+	//glm::vec4 nearRayPos = glm::vec4(ndcRayPos.x, ndcRayPos.y, 2.0f, 1.0f);
+	//glm::vec4 farRayPos = glm::vec4(ndcRayPos.x, ndcRayPos.y, -2.0f, 1.0f);	
 
-	glm::vec3 rayOrigin = glm::vec3(nearRayPos.x / nearRayPos.w, nearRayPos.y / nearRayPos.w, nearRayPos.z / nearRayPos.w);
-	glm::vec3 rayEndPoint = glm::vec3(farRayPos.x / farRayPos.w, farRayPos.y / farRayPos.w, farRayPos.z / farRayPos.w);
+	//glm::vec3 rayOrigin = glm::vec3(nearRayPos.x / nearRayPos.w, nearRayPos.y / nearRayPos.w, nearRayPos.z / nearRayPos.w);
+	//glm::vec3 rayEndPoint = glm::vec3(farRayPos.x / farRayPos.w, farRayPos.y / farRayPos.w, farRayPos.z / farRayPos.w);
+	glm::vec3 rayOrigin = glm::vec3(0.0f, 0.0f, -3.0f);
+	glm::vec3 rayEndPoint = glm::vec3(0.0f, 0.0f, 3.0f);
 	glm::vec3 rayDirection = rayEndPoint - rayOrigin;
 	rayDirection = glm::normalize(rayDirection);	
 
 	//march positions along ray
-	int maxSteps = 255;
+	int maxSteps = 100;
 	float start = 0.0;
-	float step = 1.0f;
-	int iterations = 5;
+	float step = 0.06f;
+	int iterations = 50;
 	glm::vec3 position = rayOrigin;	
 	float power = 2.0f;
-	float dr = 1.0f;
+	//float dr = 1.0f;
 	float theta = 0.0f;
 	float phi = 0.0f;
 	float r = 0.0f;
+	int count = 0;
 
 	for(int i = 0; i < maxSteps; i++){
 
-		r = glm::length(position); 			
+		//r = glm::length(position); 			
+		//std::cout << "position length = " << r << std::endl;
 	
-		if(r > 1.5f){
+		//if(r > 4.0f){
 	
-			//value to CSound
-			*m_cspMandelEscapeVal = (MYFLT)r;	
+		//	//value to CSound
+		//	//*m_cspMandelEscapeVal = (MYFLT)r;	
+		//	//std::cout << "R distance value: " << r << std::endl;
+		//	break;
 
-		} else if(r <= 1.5f){
+		//} else if(r <= 4.0f){
 
 			glm::vec3 z = position;	
 
-			for(int j = 0; j < iterations; j++){
+			for(int j = 0; j <= iterations; j++){
 
 				// mandelbulb formula adapted from 
 				// https://www.shadertoy.com/view/tdtGRj
 				r = length(z);
-				if(r > 1.5f) break;
-				theta = acos(z.y / r);
-				phi = atan2(z.z, z.x) * (1 + (2 * sineControlVal));
-				dr = pow(r, power - 1.0f) * power * dr + 1.0f;
-				theta *= power;
-				phi *= power;
-				z = pow(r, power) * glm::vec3(sin(theta) * cos(phi), cos(theta), sin(phi) * sin(theta)) + position;
+				//if(r > 2.0f) break;
+				theta = acos(z.z / r);
+				//phi = atan2(z.z, z.x) * (1 + (2 * sineControlVal));
+				phi = atan2(z.y, z.x);
+				//dr = pow(r, power - 1.0f) * power * dr + 1.0f;
+				//theta *= power;
+				//phi *= power;
+				//z = pow(r, power) * glm::vec3(sin(theta) * cos(phi), cos(theta), sin(phi) * sin(theta)) + position;
+				z = pow(r, power) * glm::vec3(sin(theta) * cos(phi), cos(theta), sin(phi) * sin(theta));
+				count = j;
+
+				if(length(z) > 2.0f) break;
+
 			}
 
 			//value to CSound
-			*m_cspMandelEscapeVal = (MYFLT)r;
-		}
+			*m_cspMandelEscapeVal = (MYFLT)count;
+			//*m_cspMandelEscapeVal = (MYFLT)dr;
+			std::cout << "position : " << "x - " << position.x << " y - " << position.y << " z - " << position.z << "\n\n" << "count value: " << count << " at iteration no. " << i << "\n\n" << std::endl;
+		//}
 
-		position += (rayOrigin + step * rayDirection);
+		position += step * rayDirection;
 	}	
 
 
+//*********************************************************************************************
 // Machine Learning 
 //*********************************************************************************************
 	bool currentRandomState = m_bPrevRandomState;

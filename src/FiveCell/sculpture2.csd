@@ -125,7 +125,7 @@ instr 3 ; Real-time Spectral Instrument - Mandelbulb Formula Sonification
 ;**************************************************************************************
 
 ; get control value from application
-;kSineControlVal	chnget	"sineControlVal"
+kSineControlVal		chnget	"sineControlVal"
 kMandelEscapeVal	chnget	"mandelEscapeVal"
 
 ifftsize = 2048
@@ -140,19 +140,19 @@ fsig	pvsanal	gaOut1,	ifftsize,	ioverlap,	iwinsize,	iwinshape
 ioverlap,	inbins,	iwindowsize,	iformat	pvsinfo	fsig
 print	ioverlap,	inbins,	iwindowsize,	iformat		
 
-;inoscs = 250
-;kfmod = 0.5 * kSineControlVal
-;ibinoffset = 2
-;ibinincr = 4
+inoscs = 250
+kfmod = 1.0 * (kMandelEscapeVal / 4.0) 
+ibinoffset = 2
+ibinincr = 4
 
-;gaOut	pvsadsyn	fsig,	inoscs,	kfmod,	ibinoffset,	ibinincr
+gaOut2	pvsadsyn	fsig,	inoscs,	kfmod,	ibinoffset,	ibinincr
 
-ifn = 1
-kdepth = 0.5 + kMandelEscapeVal 
+;ifn = 1
+;kdepth = 0.5 + kMandelEscapeVal 
 
-fmask	pvsmaska	fsig,	ifn,	kdepth		
+;fmask	pvsmaska	fsig,	ifn,	kdepth		
 
-gaOut2	pvsynth	fmask
+;gaOut2	pvsynth	fmask
 	;outs	aOut0,	aOut0
 
 endin
