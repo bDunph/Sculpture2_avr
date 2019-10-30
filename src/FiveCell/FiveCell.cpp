@@ -79,6 +79,19 @@ bool FiveCell::setup(std::string csd, GLuint skyboxProg, GLuint soundObjProg, GL
 		std::cout << "GetChannelPtr could not get the mandelEscapeVal value" << std::endl;
 		return false;
 	}
+	
+	const char* mandelEscapeIndex = "mandelEscapeIndex";
+	if(session->GetChannelPtr(m_cspMandelEscapeIndex, mandelEscapeIndex, CSOUND_INPUT_CHANNEL | CSOUND_CONTROL_CHANNEL) != 0){
+		std::cout << "GetChannelPtr could not get the mandelEscapeIndex value" << std::endl;
+		return false;
+	}
+
+	const char* mandelMaxPoints = "mandelMaxPoints";
+	if(session->GetChannelPtr(m_cspMandelMaxPoints, mandelMaxPoints, CSOUND_INPUT_CHANNEL | CSOUND_CONTROL_CHANNEL) != 0){
+		std::cout << "GetChannelPtr could not get the mandelMaxPoints value" << std::endl;
+		return false;
+	}
+
 //********* output values from csound to avr *******************//
 
 	const char* rmsOut = "rmsOut";
@@ -1149,7 +1162,10 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 
 	*m_cspSineControlVal = (MYFLT)sineControlVal;
 
-	//calculate r values of mandelbulb along ray-------------------
+//*********************************************************************************************
+// Calculate escape values of coordinates along a ray using mandelbulb formula
+// Send these values as an array to CSound to use as a spectral filter
+//*********************************************************************************************
 
 	//create ray values	
 	//glm::vec2 ndcRayPos = glm::vec2(0.0f, 0.0f);
@@ -1166,6 +1182,10 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 
 	//march positions along ray
 	int maxSteps = 100;
+
+	// send maxSteps value to CSound to determine length of array
+	*m_cspMandelMaxPoints = (MYFLT)maxSteps;
+
 	float start = 0.0;
 	float step = 0.06f;
 	int iterations = 50;
@@ -1214,7 +1234,9 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 			}
 
 			//value to CSound
+			*m_cspMandelEscapeIndex = i;
 			*m_cspMandelEscapeVal = (MYFLT)count;
+			
 			//*m_cspMandelEscapeVal = (MYFLT)dr;
 			std::cout << "position : " << "x - " << position.x << " y - " << position.y << " z - " << position.z << "\n\n" << "count value: " << count << " at iteration no. " << i << "\n\n" << std::endl;
 		//}

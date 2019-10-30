@@ -127,6 +127,14 @@ instr 3 ; Real-time Spectral Instrument - Mandelbulb Formula Sonification
 ; get control value from application
 kSineControlVal		chnget	"sineControlVal"
 kMandelEscapeVal	chnget	"mandelEscapeVal"
+kMandelEscapeIndex	chnget 	"mandelEscapeIndex"
+iMandelMaxPoints	chnget	"mandelMaxPoints"
+
+; create array of size mandelMaxPoints to store mandelbulb escape values
+kMandelArr[]	init	iMandelMaxPoints
+
+; get escape values and indices from application and store in an array
+
 
 ifftsize = 2048
 ioverlap = ifftsize / 4

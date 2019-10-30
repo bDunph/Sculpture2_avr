@@ -153,6 +153,8 @@ private:
 	MYFLT* m_pRmsOut;
 	MYFLT* m_cspSineControlVal;
 	MYFLT* m_cspMandelEscapeVal;
+	MYFLT* m_cspMandelEscapeIndex;
+	MYFLT* m_cspMandelMaxPoints;
 
 	//raymarching quad
 	unsigned int m_uiNumSceneVerts;
