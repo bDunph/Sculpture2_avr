@@ -152,10 +152,11 @@ private:
 	MYFLT* randomFrequencyVal;
 	MYFLT* m_pRmsOut;
 	MYFLT* m_cspSineControlVal;
-	std::vector<int> m_vecMandelEscapeVals;
-	MYFLT* m_cspMandelEscapeVal;
+	MYFLT* m_cspMandelEscapeVals[100];
+	//MYFLT* m_cspMandelEscapeVal;
 	MYFLT* m_cspMandelEscapeIndex;
-	MYFLT* m_cspMandelMaxPoints;
+	//MYFLT* m_cspMandelMaxPoints;
+	MYFLT* m_cspMaxSteps;
 
 	//raymarching quad
 	unsigned int m_uiNumSceneVerts;
@@ -246,7 +247,6 @@ private:
 	//control variables
 	float sineControlVal;
 
-	double* m_pMaxSteps;
-	int m_iMaxSteps;
+	float m_fMaxSteps;
 };
 #endif

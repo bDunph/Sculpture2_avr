@@ -124,29 +124,31 @@ endin
 instr 3 ; Real-time Spectral Instrument - Mandelbulb Formula Sonification 
 ;**************************************************************************************
 
-;iMandelMaxPoints	chnget	"mandelMaxPoints"
+iMandelMaxPoints	chnget	"mandelMaxPoints"
+
+printk2 iMandelMaxPoints
 
 ; initialise array of size mandelMaxPoints to store mandelbulb escape values
-;kMandelArr[]	init	iMandelMaxPoints
+kMandelArr[]	init	iMandelMaxPoints
 
-;S_EscapeValChannelNames[] init iMandelMaxPoints
+S_EscapeValChannelNames[] init iMandelMaxPoints
 
-;kCount init 0
-;loop:
-;	S_IndexNumber	sprintfk	"%i",	kCount
-;
-;	S_EscapeValChannelName	strcpy	"mandelEscapeVal"
-;
-;	S_NameAndNumber	strcat	S_EscapeValChannelName, S_IndexNumber
-;
-;	kMandelArr[kCount]	chnget	S_NameAndNumber
-;
-;	printk2 kMandelArr[kCount]
-;
-;	loop_lt	kCount, 1, iMandelMaxPoints, loop		
-;
-;; reset counter to 0 after loop finishes
-;kCount = 0
+kCount init 0
+loop:
+	S_IndexNumber	sprintfk	"%i",	kCount
+
+	S_EscapeValChannelName	strcpy	"mandelEscapeVal"
+
+	S_NameAndNumber	strcat	S_EscapeValChannelName, S_IndexNumber
+
+	kMandelArr[kCount]	chnget	S_NameAndNumber
+
+	printk2 kMandelArr[kCount]
+
+	loop_lt	kCount, 1, iMandelMaxPoints, loop		
+
+; reset counter to 0 after loop finishes
+kCount = 0
 
 ; get sine control value from application
 kSineControlVal		chnget	"sineControlVal"
