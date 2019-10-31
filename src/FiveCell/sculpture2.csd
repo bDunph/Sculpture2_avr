@@ -24,7 +24,7 @@ instr 1 ; Real-time Spectral Instrument - Environmental Noise
 ; get control value from application
 kSineControlVal	chnget	"sineControlVal"
 
-ares	fractalnoise	ampdbfs(-36),	1 ; pink noise generator
+ares	fractalnoise	ampdbfs(-24),	1 ; pink noise generator
 
 ifftsize = 2048
 ioverlap = ifftsize / 4
@@ -61,7 +61,7 @@ instr 2 ; Modal Instrument
 ; get control value from application
 kSineControlVal	chnget	"sineControlVal"
 
-iamp    init ampdbfs(-1)
+iamp    init ampdbfs(-12)
 
 ;kFreqScale chnget "randFreq" ; random frequency scale value sent from application
 
@@ -84,12 +84,12 @@ iamp    init ampdbfs(-1)
 
 ; bow excitator-------------------------------------
 
-kamp = ampdbfs(-3) - (0.01 * kSineControlVal)
-kfreq = 55 
+kamp = ampdbfs(-24) - (0.01 * kSineControlVal)
+kfreq = 55 + (0.5 * kSineControlVal) 
 kpres = 2
 krat = 0.127236
 kvibf = 3
-kvamp = ampdbfs(-3);ampdbfs(-5.995) + (0.01 * kSineControlVal)
+kvamp = ampdbfs(-24);ampdbfs(-5.995) + (0.01 * kSineControlVal)
 
 aexc	wgbow	kamp,	kfreq,	kpres,	krat,	kvibf,	kvamp
 
@@ -111,8 +111,8 @@ ares5	mode	aexc,	2063.6,	540 - (kSineControlVal * 100)
 
 ares	sum	ares1,	ares2,	ares3,	ares4,	ares5
 
-;gaOut1 = (aexc + ares) * kSineControlVal 
-gaOut1 = aexc + ares
+gaOut1 = (aexc + ares) * kSineControlVal 
+;gaOut1 = aexc + ares
 	;outs	gaOut1,	gaOut1
 
 ;kRms	rms	gaOut1
@@ -124,17 +124,34 @@ endin
 instr 3 ; Real-time Spectral Instrument - Mandelbulb Formula Sonification 
 ;**************************************************************************************
 
-; get control value from application
+;iMandelMaxPoints	chnget	"mandelMaxPoints"
+
+; initialise array of size mandelMaxPoints to store mandelbulb escape values
+;kMandelArr[]	init	iMandelMaxPoints
+
+;S_EscapeValChannelNames[] init iMandelMaxPoints
+
+;kCount init 0
+;loop:
+;	S_IndexNumber	sprintfk	"%i",	kCount
+;
+;	S_EscapeValChannelName	strcpy	"mandelEscapeVal"
+;
+;	S_NameAndNumber	strcat	S_EscapeValChannelName, S_IndexNumber
+;
+;	kMandelArr[kCount]	chnget	S_NameAndNumber
+;
+;	printk2 kMandelArr[kCount]
+;
+;	loop_lt	kCount, 1, iMandelMaxPoints, loop		
+;
+;; reset counter to 0 after loop finishes
+;kCount = 0
+
+; get sine control value from application
 kSineControlVal		chnget	"sineControlVal"
-kMandelEscapeVal	chnget	"mandelEscapeVal"
-kMandelEscapeIndex	chnget 	"mandelEscapeIndex"
-iMandelMaxPoints	chnget	"mandelMaxPoints"
 
-; create array of size mandelMaxPoints to store mandelbulb escape values
-kMandelArr[]	init	iMandelMaxPoints
-
-; get escape values and indices from application and store in an array
-
+; check to see if mandelbulb index value is 0 ie. the start of the application loop each frame
 
 ifftsize = 2048
 ioverlap = ifftsize / 4
@@ -148,19 +165,19 @@ fsig	pvsanal	gaOut1,	ifftsize,	ioverlap,	iwinsize,	iwinshape
 ioverlap,	inbins,	iwindowsize,	iformat	pvsinfo	fsig
 print	ioverlap,	inbins,	iwindowsize,	iformat		
 
-inoscs = 250
-kfmod = 1.0 * (kMandelEscapeVal / 4.0) 
-ibinoffset = 2
-ibinincr = 4
+;inoscs = 250
+;kfmod = 1.0
+;ibinoffset = 2
+;ibinincr = 4
+;
+;gaOut2	pvsadsyn	fsig,	inoscs,	kfmod,	ibinoffset,	ibinincr
 
-gaOut2	pvsadsyn	fsig,	inoscs,	kfmod,	ibinoffset,	ibinincr
+ifn = 1
+kdepth = 0.8 * kSineControlVal
 
-;ifn = 1
-;kdepth = 0.5 + kMandelEscapeVal 
+fmask	pvsmaska	fsig,	ifn,	kdepth		
 
-;fmask	pvsmaska	fsig,	ifn,	kdepth		
-
-;gaOut2	pvsynth	fmask
+gaOut2	pvsynth	fmask
 	;outs	aOut0,	aOut0
 
 endin

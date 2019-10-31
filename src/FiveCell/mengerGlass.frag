@@ -84,7 +84,7 @@ float planeSDF(vec3 pos, vec4 normal){
 //----------------------------------------------------------------------------------------
 float mandelbulbSDF(vec3 pos) {
 
-	float Power = 2.0;
+	float Power = 3.0;
     	float r = length(pos);
     	if(r > 1.5) return r-1.2;
     	vec3 z = pos;
@@ -93,9 +93,9 @@ float mandelbulbSDF(vec3 pos) {
     	    	r = length(z);
     	    	if (r>1.5) break;
     	    	//theta = acos((z.y/r) + (0.01 *  sineControlVal));
-    	    	theta = acos(z.y/r);
-    	    	//phi = atan(z.z,z.x) * (1 + (2 * sineControlVal));
-    	    	phi = atan(z.z,z.x);
+    	    	theta = acos(z.y/r) * sineControlVal;
+    	    	phi = atan(z.z,z.x) * sineControlVal;
+    	    	//phi = atan(z.z,z.x);
     	    	dr =  pow( r, Power-1.0)*Power*dr + 1.0;
     	    	theta *= Power;
     	    	phi *= Power;

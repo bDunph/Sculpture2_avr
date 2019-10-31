@@ -73,24 +73,34 @@ bool FiveCell::setup(std::string csd, GLuint skyboxProg, GLuint soundObjProg, GL
 		std::cout << "GetChannelPtr could not get the sineControlVal value" << std::endl;
 		return false;
 	}
-
-	const char* mandelEscapeVal = "mandelEscapeVal";
-	if(session->GetChannelPtr(m_cspMandelEscapeVal, mandelEscapeVal, CSOUND_INPUT_CHANNEL | CSOUND_CONTROL_CHANNEL) != 0){
-		std::cout << "GetChannelPtr could not get the mandelEscapeVal value" << std::endl;
-		return false;
-	}
 	
-	const char* mandelEscapeIndex = "mandelEscapeIndex";
-	if(session->GetChannelPtr(m_cspMandelEscapeIndex, mandelEscapeIndex, CSOUND_INPUT_CHANNEL | CSOUND_CONTROL_CHANNEL) != 0){
-		std::cout << "GetChannelPtr could not get the mandelEscapeIndex value" << std::endl;
-		return false;
-	}
+	//march positions along ray
+	m_iMaxSteps = 100;
+	//*m_pMaxSteps = (MYFLT)m_iMaxSteps;
 
-	const char* mandelMaxPoints = "mandelMaxPoints";
-	if(session->GetChannelPtr(m_cspMandelMaxPoints, mandelMaxPoints, CSOUND_INPUT_CHANNEL | CSOUND_CONTROL_CHANNEL) != 0){
-		std::cout << "GetChannelPtr could not get the mandelMaxPoints value" << std::endl;
-		return false;
-	}
+	//for(int i = 0; i < m_iMaxSteps; i++){
+
+	//	std::string mandelEscapeValString = "mandelEscapeVal" + std::to_string(i);
+	//	const char* mandelEscapeVal = mandelEscapeValString.c_str();;
+	//	*m_cspMandelEscapeVal = (MYFLT)m_vecMandelEscapeVals[i];
+	//	if(session->GetChannelPtr(m_cspMandelEscapeVal, mandelEscapeVal, CSOUND_INPUT_CHANNEL | CSOUND_CONTROL_CHANNEL) != 0){
+	//		std::cout << "GetChannelPtr could not get the mandelEscapeVal " << std::to_string(i) << " value" << std::endl;
+	//		return false;
+	//	}
+
+	//}
+	
+	//const char* mandelEscapeIndex = "mandelEscapeIndex";
+	//if(session->GetChannelPtr(m_cspMandelEscapeIndex, mandelEscapeIndex, CSOUND_INPUT_CHANNEL | CSOUND_CONTROL_CHANNEL) != 0){
+	//	std::cout << "GetChannelPtr could not get the mandelEscapeIndex value" << std::endl;
+	//	return false;
+	//}
+
+	//const char* mandelMaxPoints = "mandelMaxPoints";
+	//if(session->GetChannelPtr(m_pMaxSteps, mandelMaxPoints, CSOUND_INPUT_CHANNEL | CSOUND_CONTROL_CHANNEL) != 0){
+	//	std::cout << "GetChannelPtr could not get the mandelMaxPoints value" << std::endl;
+	//	return false;
+	//}
 
 //********* output values from csound to avr *******************//
 
@@ -1175,16 +1185,14 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 
 	//glm::vec3 rayOrigin = glm::vec3(nearRayPos.x / nearRayPos.w, nearRayPos.y / nearRayPos.w, nearRayPos.z / nearRayPos.w);
 	//glm::vec3 rayEndPoint = glm::vec3(farRayPos.x / farRayPos.w, farRayPos.y / farRayPos.w, farRayPos.z / farRayPos.w);
-	glm::vec3 rayOrigin = glm::vec3(0.0f, 0.0f, -3.0f);
+	glm::vec3 rayOrigin = glm::vec3(0.5f, 0.0f, -3.0f);
 	glm::vec3 rayEndPoint = glm::vec3(0.0f, 0.0f, 3.0f);
 	glm::vec3 rayDirection = rayEndPoint - rayOrigin;
 	rayDirection = glm::normalize(rayDirection);	
 
-	//march positions along ray
-	int maxSteps = 100;
-
+	
 	// send maxSteps value to CSound to determine length of array
-	*m_cspMandelMaxPoints = (MYFLT)maxSteps;
+	//*m_cspMandelMaxPoints = (MYFLT)maxSteps;
 
 	float start = 0.0;
 	float step = 0.06f;
@@ -1197,7 +1205,7 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 	float r = 0.0f;
 	int count = 0;
 
-	for(int i = 0; i < maxSteps; i++){
+	for(int i = 0; i < m_iMaxSteps; i++){
 
 		//r = glm::length(position); 			
 		//std::cout << "position length = " << r << std::endl;
@@ -1234,8 +1242,8 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 			}
 
 			//value to CSound
-			*m_cspMandelEscapeIndex = i;
-			*m_cspMandelEscapeVal = (MYFLT)count;
+			//*m_cspMandelEscapeIndex = (MYFLT)i;
+			//m_vecMandelEscapeVals.push_back(count);
 			
 			//*m_cspMandelEscapeVal = (MYFLT)dr;
 			std::cout << "position : " << "x - " << position.x << " y - " << position.y << " z - " << position.z << "\n\n" << "count value: " << count << " at iteration no. " << i << "\n\n" << std::endl;

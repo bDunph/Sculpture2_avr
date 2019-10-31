@@ -152,6 +152,7 @@ private:
 	MYFLT* randomFrequencyVal;
 	MYFLT* m_pRmsOut;
 	MYFLT* m_cspSineControlVal;
+	std::vector<int> m_vecMandelEscapeVals;
 	MYFLT* m_cspMandelEscapeVal;
 	MYFLT* m_cspMandelEscapeIndex;
 	MYFLT* m_cspMandelMaxPoints;
@@ -245,5 +246,7 @@ private:
 	//control variables
 	float sineControlVal;
 
+	double* m_pMaxSteps;
+	int m_iMaxSteps;
 };
 #endif
