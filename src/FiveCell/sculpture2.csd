@@ -133,22 +133,25 @@ kMandelArr[]	init	iMandelMaxPoints
 
 S_EscapeValChannelNames[] init iMandelMaxPoints
 
-kCount init 0
+kCount = 0
 loop:
-	S_IndexNumber	sprintfk	"%i",	kCount
+
+	S_IndexNumber	sprintfk	"%d",	kCount
+
+	printks	"%s\n",	0,	S_IndexNumber
 
 	S_EscapeValChannelName	strcpy	"mandelEscapeVal"
 
 	S_NameAndNumber	strcat	S_EscapeValChannelName, S_IndexNumber
 
-	kMandelArr[kCount]	chnget	S_NameAndNumber
 
-	printk2 kMandelArr[kCount]
+	kMandelArr[kCount]	chnget	S_NameAndNumber
 
 	loop_lt	kCount, 1, iMandelMaxPoints, loop		
 
 ; reset counter to 0 after loop finishes
-kCount = 0
+
+;kCount = 0
 
 ; get sine control value from application
 kSineControlVal		chnget	"sineControlVal"
@@ -221,13 +224,15 @@ f1	0	1025	8	0	2	1	3	0	4	1	6	0	10	1	12	0	16	1	32	0	1	0	939	0
 ;********************************************************************
 
 
-i1	2	10000
+;i1	2	10000
 
-i2	2	10000
+;i2	2	10000
 
-i3	2	10000
+i3	2	2	
 
-i12	2	10000
+i3	4	2	
+
+;i12	2	10000
 
 </CsScore>
 </CsoundSynthesizer>
