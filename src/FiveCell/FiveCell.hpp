@@ -2,6 +2,7 @@
 #define FIVE_CELL_HPP
 
 //#include "Skybox.hpp"
+#define MAX_MANDEL_STEPS 513 
 
 #include <string>
 #include <vector>
@@ -152,7 +153,7 @@ private:
 	MYFLT* randomFrequencyVal;
 	MYFLT* m_pRmsOut;
 	MYFLT* m_cspSineControlVal;
-	MYFLT* m_cspMandelEscapeVals[100];
+	MYFLT* m_cspMandelEscapeVals[MAX_MANDEL_STEPS];
 	//MYFLT* m_cspMandelEscapeVal;
 	MYFLT* m_cspMandelEscapeIndex;
 	//MYFLT* m_cspMandelMaxPoints;
@@ -247,6 +248,6 @@ private:
 	//control variables
 	float sineControlVal;
 
-	float m_fMaxSteps;
+	float m_iMaxSteps;
 };
 #endif

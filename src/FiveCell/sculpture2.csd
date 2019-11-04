@@ -17,6 +17,9 @@ nchnls = 2
 ; Set 0dbfs to 1
 0dbfs = 1
 
+; create a zeroed function table the same size as iMandelMaxPoints
+giMandelTable	ftgen	0,	0,	513,	2,	0
+
 ;**************************************************************************************
 instr 1 ; Real-time Spectral Instrument - Environmental Noise 
 ;**************************************************************************************
@@ -126,39 +129,29 @@ instr 3 ; Real-time Spectral Instrument - Mandelbulb Formula Sonification
 
 iMandelMaxPoints	chnget	"mandelMaxPoints"
 
-printk2 iMandelMaxPoints
-
 ; initialise array of size mandelMaxPoints to store mandelbulb escape values
 kMandelArr[]	init	iMandelMaxPoints
 
 S_EscapeValChannelNames[] init iMandelMaxPoints
 
+; loop through channel names and get values from application
 kCount = 0
 loop:
 
-	S_IndexNumber	sprintfk	"%d",	kCount
+	S_ChannelName sprintfk	"mandelEscapeVal%d",	kCount
 
-	printks	"%s\n",	0,	S_IndexNumber
+	;kMandelArr[kCount]	chnget	S_ChannelName
+	kMandelVal	chnget	S_ChannelName
 
-	S_EscapeValChannelName	strcpy	"mandelEscapeVal"
-
-	S_NameAndNumber	strcat	S_EscapeValChannelName, S_IndexNumber
-
-
-	kMandelArr[kCount]	chnget	S_NameAndNumber
+	; fill giMandelTable with values from application 
+	tablew	kMandelVal,	kCount,	giMandelTable	
 
 	loop_lt	kCount, 1, iMandelMaxPoints, loop		
-
-; reset counter to 0 after loop finishes
-
-;kCount = 0
 
 ; get sine control value from application
 kSineControlVal		chnget	"sineControlVal"
 
-; check to see if mandelbulb index value is 0 ie. the start of the application loop each frame
-
-ifftsize = 2048
+ifftsize = 1024 
 ioverlap = ifftsize / 4
 iwinsize = ifftsize * 2
 iwinshape = 0
@@ -170,15 +163,20 @@ fsig	pvsanal	gaOut1,	ifftsize,	ioverlap,	iwinsize,	iwinshape
 ioverlap,	inbins,	iwindowsize,	iformat	pvsinfo	fsig
 print	ioverlap,	inbins,	iwindowsize,	iformat		
 
-;inoscs = 250
-;kfmod = 1.0
+; read through table at k-rate
+;kTime	timeinstk	
+;kEnvelope	table	kTime,	giMandelTable
+
+;inoscs = iMandelMaxPoints
+;kfmod = 1.0 * kEnvelope
 ;ibinoffset = 2
-;ibinincr = 4
-;
+;ibinincr = 10
+
 ;gaOut2	pvsadsyn	fsig,	inoscs,	kfmod,	ibinoffset,	ibinincr
 
-ifn = 1
-kdepth = 0.8 * kSineControlVal
+ifn = giMandelTable 
+;kdepth = 0.8 * kSineControlVal
+kdepth = 0.8 
 
 fmask	pvsmaska	fsig,	ifn,	kdepth		
 
@@ -224,15 +222,15 @@ f1	0	1025	8	0	2	1	3	0	4	1	6	0	10	1	12	0	16	1	32	0	1	0	939	0
 ;********************************************************************
 
 
-;i1	2	10000
+i1	2	10000
 
-;i2	2	10000
+i2	2	10000
 
-i3	2	2	
+i3	2	10000	
 
-i3	4	2	
+;i3	4	2	
 
-;i12	2	10000
+i12	2	10000
 
 </CsScore>
 </CsoundSynthesizer>
