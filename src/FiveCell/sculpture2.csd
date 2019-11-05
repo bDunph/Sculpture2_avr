@@ -10,8 +10,8 @@
 
 ; Initialize the global variables.
 sr = 48000
-kr = 4800
-ksmps = 10
+kr = 480
+ksmps = 100
 nchnls = 2
 
 ; Set 0dbfs to 1
@@ -176,7 +176,7 @@ print	ioverlap,	inbins,	iwindowsize,	iformat
 
 ifn = giMandelTable 
 ;kdepth = 0.8 * kSineControlVal
-kdepth = 0.8 
+kdepth = 1 
 
 fmask	pvsmaska	fsig,	ifn,	kdepth		
 

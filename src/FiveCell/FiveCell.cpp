@@ -1201,13 +1201,14 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 	float start = 0.0;
 	float step = 0.06f;
 	int iterations = 50;
+	//glm::vec3 position = rayOrigin + glm::vec3(sin(glfwGetTime()), 0.0f, 0.0f);	
 	glm::vec3 position = rayOrigin;	
 	float power = 2.0f;
 	//float dr = 1.0f;
 	float theta = 0.0f;
 	float phi = 0.0f;
 	float r = 0.0f;
-	int count = 0;
+	double count = 0.0f;
 
 	for(int i = 0; i < m_iMaxSteps; i++){
 
@@ -1239,11 +1240,14 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 				//phi *= power;
 				//z = pow(r, power) * glm::vec3(sin(theta) * cos(phi), cos(theta), sin(phi) * sin(theta)) + position;
 				z = pow(r, power) * glm::vec3(sin(theta) * cos(phi), cos(theta), sin(phi) * sin(theta));
-				count = j;
+				count = (double)j;
 
 				if(length(z) > 2.0f) break;
 
 			}
+
+			//map count value to 0 - 1 range
+			count /= (double)iterations;
 
 			//values to CSound
 			*m_cspMandelEscapeVals[i] = (MYFLT)count;
