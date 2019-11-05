@@ -18,7 +18,7 @@ nchnls = 2
 0dbfs = 1
 
 ; create a zeroed function table the same size as iMandelMaxPoints
-giMandelTable	ftgen	0,	0,	513,	2,	0
+;giMandelTable	ftgen	0,	0,	513,	2,	0
 
 ;**************************************************************************************
 instr 1 ; Real-time Spectral Instrument - Environmental Noise 
@@ -130,23 +130,16 @@ instr 3 ; Real-time Spectral Instrument - Mandelbulb Formula Sonification
 iMandelMaxPoints	chnget	"mandelMaxPoints"
 
 ; initialise array of size mandelMaxPoints to store mandelbulb escape values
-kMandelArr[]	init	iMandelMaxPoints
+;kMandelArr[]	init	iMandelMaxPoints
 
 S_EscapeValChannelNames[] init iMandelMaxPoints
 
-; loop through channel names and get values from application
-kCount = 0
-loop:
-
-	S_ChannelName sprintfk	"mandelEscapeVal%d",	kCount
-
-	;kMandelArr[kCount]	chnget	S_ChannelName
-	kMandelVal	chnget	S_ChannelName
-
-	; fill giMandelTable with values from application 
-	tablew	kMandelVal,	kCount,	giMandelTable	
-
-	loop_lt	kCount, 1, iMandelMaxPoints, loop		
+; route output from instrument 2 above to pvsanal
+fsig	pvsanal	gaOut1,	ifftsize,	ioverlap,	iwinsize,	iwinshape
+	
+; get info from pvsanal and print
+ioverlap,	inbins,	iwindowsize,	iformat	pvsinfo	fsig
+print	ioverlap,	inbins,	iwindowsize,	iformat		
 
 ; get sine control value from application
 kSineControlVal		chnget	"sineControlVal"
@@ -156,31 +149,75 @@ ioverlap = ifftsize / 4
 iwinsize = ifftsize * 2
 iwinshape = 0
 
-; route output from instrument 2 above to pvsanal
-fsig	pvsanal	gaOut1,	ifftsize,	ioverlap,	iwinsize,	iwinshape
 
-; get info from pvsanal and print
-ioverlap,	inbins,	iwindowsize,	iformat	pvsinfo	fsig
-print	ioverlap,	inbins,	iwindowsize,	iformat		
+;************** Frequency Processing *****************
 
-; read through table at k-rate
-;kTime	timeinstk	
-;kEnvelope	table	kTime,	giMandelTable
+iNumRays init 3
 
-;inoscs = iMandelMaxPoints
-;kfmod = 1.0 * kEnvelope
-;ibinoffset = 2
-;ibinincr = 10
+iFreqTable[]	init	iNumRays
+iAmpTable[]	init 	iNumRays
 
-;gaOut2	pvsadsyn	fsig,	inoscs,	kfmod,	ibinoffset,	ibinincr
+kAverageVals[] init iNumRays
 
-ifn = giMandelTable 
+; create tables to write frequency data
+iFreqTable	ftgen	0,	0,	inbins,	2,	0
+iAmpTable	ftgen	0,	0,	inbins,	2,	0
+
+; write frequency data to function table
+kFlag	pvsftw	fsig,	iAmpTable,	iFreqTable	
+
+if kFlag == 0 kgoto contin
+
+	; loop through channel names and get values from application
+	kCount = 0
+	kRayCount = 0
+
+	loop1:
+		
+		loop2:
+
+			S_ChannelName sprintfk	"mandelEscapeVal%d%d",	kRayCount,	kCount
+
+			;kMandelArr[kCount]	chnget	S_ChannelName
+			kMandelVal	chnget	S_ChannelName
+
+			*************** FIGURE OUT ARRAY VALUES ******************8
+
+			; fill giMandelTable with values from application 
+			;tablew	kMandelVal,	kCount,	giMandelTable	
+
+			; read frequency data from iFreqTable
+			kFreq	table	kCount,	iFreqTable
+	
+			; multiply kMandelVal with frequency value 
+			kProcFreqVal = kFreq * kMandelVal
+
+			; write processed freq data back to table
+			tablew	kProcFreqVal,	kCount,	iFreqTable	
+
+			loop_lt	kCount, 1, iMandelMaxPoints, loop2		
+
+		
+		loop_lt	kRayCount, 1, iNumRays, loop1
+		
+		; read new frequency data
+		pvsftr	fsig,	iAmpTable,	iFreqTable
+
+
+contin:	
+
+; resynthesize the audio signal
+gaOut2	pvsynth	fsig
+
+;*********** Amplitude processing ******************
+;ifn = giMandelTable 
 ;kdepth = 0.8 * kSineControlVal
-kdepth = 1 
+;kdepth = 1 
 
-fmask	pvsmaska	fsig,	ifn,	kdepth		
+; use mandelbulb escape values to modify amplitude values of the signal acting as a spectral filter
+;fmask	pvsmaska	fsig,	ifn,	kdepth		
 
-gaOut2	pvsynth	fmask
+;gaOut2	pvsynth	fmask
 	;outs	aOut0,	aOut0
 
 endin

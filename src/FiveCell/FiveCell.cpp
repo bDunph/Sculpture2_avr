@@ -73,16 +73,20 @@ bool FiveCell::setup(std::string csd, GLuint skyboxProg, GLuint soundObjProg, GL
 		std::cout << "GetChannelPtr could not get the sineControlVal value" << std::endl;
 		return false;
 	}
+
+	// nested loops to send mandelbulb escape values from multiple rays to CSound
+	for(int i = 0; i < NUM_RAYS; i++){
 	
-	for(int i = 0; i < MAX_MANDEL_STEPS; i++){
+		for(int j = 0; j < MAX_MANDEL_STEPS; j++){
 
-		std::string mandelEscapeValString = "mandelEscapeVal" + std::to_string(i);
-		const char* mandelEscapeVal = mandelEscapeValString.c_str();;
-		if(session->GetChannelPtr(m_cspMandelEscapeVals[i], mandelEscapeVal, CSOUND_INPUT_CHANNEL | CSOUND_CONTROL_CHANNEL) != 0){
-			std::cout << "GetChannelPtr could not get the mandelEscapeVal " << std::to_string(i) << " value" << std::endl;
-			return false;
+			std::string mandelEscapeValString = "mandelEscapeVal" + std::to_string(i) + std::to_string(j);
+			const char* mandelEscapeVal = mandelEscapeValString.c_str();;
+			if(session->GetChannelPtr(m_cspMandelEscapeVals[i][j], mandelEscapeVal, CSOUND_INPUT_CHANNEL | CSOUND_CONTROL_CHANNEL) != 0){
+				std::cout << "GetChannelPtr could not get the mandelEscapeVal " << std::to_string(i) << " value" << std::endl;
+				return false;
+			}
+
 		}
-
 	}
 	
 	//const char* mandelEscapeIndex = "mandelEscapeIndex";
@@ -1184,11 +1188,18 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 
 	//glm::vec3 rayOrigin = glm::vec3(nearRayPos.x / nearRayPos.w, nearRayPos.y / nearRayPos.w, nearRayPos.z / nearRayPos.w);
 	//glm::vec3 rayEndPoint = glm::vec3(farRayPos.x / farRayPos.w, farRayPos.y / farRayPos.w, farRayPos.z / farRayPos.w);
-	glm::vec3 rayOrigin = glm::vec3(0.0f, 0.0f, -3.0f);
-	glm::vec3 rayEndPoint = glm::vec3(0.0f, 0.0f, 3.0f);
-	glm::vec3 rayDirection = rayEndPoint - rayOrigin;
-	rayDirection = glm::normalize(rayDirection);	
+	
+	std::vector<glm::vec3> rayOrigin;
+	std::vector<glm::vec3> rayDirection;
 
+	for(int i = 0; i < NUM_RAYS; i++){
+
+		float xPos = -0.5f + (i * 0.5f);
+		rayOrigin.push_back(glm::vec3(xPos, 0.0f, -3.0f);
+		glm::vec3 rayEndPoint = glm::vec3(xPos, 0.0f, 3.0f);
+		rayDirection.push_back(rayEndPoint - rayOrigin[i]);
+		rayDirection[i] = glm::normalize(rayDirection[i]);	
+	}
 	
 	// send maxSteps value to CSound to determine length of array
 	//*m_cspMandelMaxPoints = (MYFLT)maxSteps;
@@ -1201,8 +1212,6 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 	float start = 0.0;
 	float step = 0.06f;
 	int iterations = 50;
-	//glm::vec3 position = rayOrigin + glm::vec3(sin(glfwGetTime()), 0.0f, 0.0f);	
-	glm::vec3 position = rayOrigin;	
 	float power = 2.0f;
 	//float dr = 1.0f;
 	float theta = 0.0f;
@@ -1210,35 +1219,25 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 	float r = 0.0f;
 	double count = 0.0f;
 
-	for(int i = 0; i < m_iMaxSteps; i++){
+	// loop to step through rays
+	for(int i = 0; i < NUM_RAYS; i++){
 
-		//r = glm::length(position); 			
-		//std::cout << "position length = " << r << std::endl;
-	
-		//if(r > 4.0f){
-	
-		//	//value to CSound
-		//	//*m_cspMandelEscapeVal = (MYFLT)r;	
-		//	//std::cout << "R distance value: " << r << std::endl;
-		//	break;
+		//glm::vec3 position = rayOrigin + glm::vec3(sin(glfwGetTime()), 0.0f, 0.0f);	
+		glm::vec3 position = rayOrigin[i];	
 
-		//} else if(r <= 4.0f){
+		// loop to step along the ray
+		for(int j = 0; j < m_iMaxSteps; j++){
 
 			glm::vec3 z = position;	
 
-			for(int j = 0; j < iterations; j++){
+			// loop to execute mandelbulb formula
+			for(int k = 0; k < iterations; k++){
 
 				// mandelbulb formula adapted from 
 				// https://www.shadertoy.com/view/tdtGRj
 				r = length(z);
-				//if(r > 2.0f) break;
-				theta = acos(z.z / r);
-				//phi = atan2(z.z, z.x) * (1 + (2 * sineControlVal));
-				phi = atan2(z.y, z.x);
-				//dr = pow(r, power - 1.0f) * power * dr + 1.0f;
-				//theta *= power;
-				//phi *= power;
-				//z = pow(r, power) * glm::vec3(sin(theta) * cos(phi), cos(theta), sin(phi) * sin(theta)) + position;
+				theta = acos(z.z / r) * sineControlVal;
+				phi = atan2(z.y, z.x) * sineControlVal;
 				z = pow(r, power) * glm::vec3(sin(theta) * cos(phi), cos(theta), sin(phi) * sin(theta));
 				count = (double)j;
 
@@ -1250,18 +1249,12 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 			count /= (double)iterations;
 
 			//values to CSound
-			*m_cspMandelEscapeVals[i] = (MYFLT)count;
+			*m_cspMandelEscapeVals[i][j] = (MYFLT)count;
 
-			//std::cout << "***********" << count << "***********" << std::endl;
-			//*m_cspMandelEscapeIndex = (MYFLT)i;
-			//m_vecMandelEscapeVals.push_back(count);
-			
-			//*m_cspMandelEscapeVal = (MYFLT)dr;
-			//std::cout << "position : " << "x - " << position.x << " y - " << position.y << " z - " << position.z << "\n\n" << "count value: " << count << " at iteration no. " << i << "\n\n" << std::endl;
-		//}
 
-		position += step * rayDirection;
-	}	
+			position += step * rayDirection;
+		}	
+	}
 
 
 //*********************************************************************************************
