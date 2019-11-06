@@ -1195,7 +1195,7 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 	for(int i = 0; i < NUM_RAYS; i++){
 
 		float xPos = -0.5f + (i * 0.5f);
-		rayOrigin.push_back(glm::vec3(xPos, 0.0f, -3.0f);
+		rayOrigin.push_back(glm::vec3(xPos, 0.0f, -3.0f));
 		glm::vec3 rayEndPoint = glm::vec3(xPos, 0.0f, 3.0f);
 		rayDirection.push_back(rayEndPoint - rayOrigin[i]);
 		rayDirection[i] = glm::normalize(rayDirection[i]);	
@@ -1252,7 +1252,7 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 			*m_cspMandelEscapeVals[i][j] = (MYFLT)count;
 
 
-			position += step * rayDirection;
+			position += step * rayDirection[i];
 		}	
 	}
 
