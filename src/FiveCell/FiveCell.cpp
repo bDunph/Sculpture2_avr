@@ -74,20 +74,18 @@ bool FiveCell::setup(std::string csd, GLuint skyboxProg, GLuint soundObjProg, GL
 		return false;
 	}
 
-	// nested loops to send mandelbulb escape values from multiple rays to CSound
-	for(int i = 0; i < NUM_RAYS; i++){
 	
-		for(int j = 0; j < MAX_MANDEL_STEPS; j++){
+	for(int i = 0; i < MAX_MANDEL_STEPS; i++){
 
-			std::string mandelEscapeValString = "mandelEscapeVal" + std::to_string(i) + std::to_string(j);
-			const char* mandelEscapeVal = mandelEscapeValString.c_str();;
-			if(session->GetChannelPtr(m_cspMandelEscapeVals[i][j], mandelEscapeVal, CSOUND_INPUT_CHANNEL | CSOUND_CONTROL_CHANNEL) != 0){
-				std::cout << "GetChannelPtr could not get the mandelEscapeVal " << std::to_string(i) << " value" << std::endl;
-				return false;
-			}
-
+		std::string mandelEscapeValString = "mandelEscapeVal" + std::to_string(i);
+		const char* mandelEscapeVal = mandelEscapeValString.c_str();
+		if(session->GetChannelPtr(m_cspMandelEscapeVals[i], mandelEscapeVal, CSOUND_INPUT_CHANNEL | CSOUND_CONTROL_CHANNEL) != 0){
+			std::cout << "GetChannelPtr could not get the mandelEscapeVal " << std::to_string(i) << " value" << std::endl;
+			return false;
 		}
+
 	}
+	
 	
 	//const char* mandelEscapeIndex = "mandelEscapeIndex";
 	//if(session->GetChannelPtr(m_cspMandelEscapeIndex, mandelEscapeIndex, CSOUND_INPUT_CHANNEL | CSOUND_CONTROL_CHANNEL) != 0){
@@ -1256,13 +1254,27 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 			count /= (double)iterations;
 
 			//values to CSound
-			*m_cspMandelEscapeVals[i][j] = (MYFLT)count;
+			m_iEscapeVals[i][j] = (float)count;
 
 
 			position += step[i] * rayDirection[i];
 		}	
 	}
 
+	float avgVal;
+
+	for(int i = 0; i < m_iMaxSteps; i++){
+
+		for(int j = 0; j < NUM_RAYS; j++){
+
+			float escVal = m_iEscapeVals[j][i];
+			
+			avgVal += escVal;
+		}
+
+		avgVal /= NUM_RAYS;
+		*m_cspMandelEscapeVals[i] = (MYFLT)avgVal;
+	}
 
 //*********************************************************************************************
 // Machine Learning 

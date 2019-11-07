@@ -134,13 +134,13 @@ kSineControlVal		chnget	"sineControlVal"
 
 S_EscapeValChannelNames[] init iMandelMaxPoints
 
-iNumRays init 1
-iNumSwapTables init 2
-iFreqTables[]	init	iNumRays
-iAmpTables[]	init 	iNumRays
-iFreqTableSwap[] init	iNumSwapTables
+;iNumRays init 1
+;iNumSwapTables init 2
+;iFreqTables[]	init	iNumRays
+;iAmpTables[]	init 	iNumRays
+;iFreqTableSwap[] init	iNumSwapTables
 
-aFinalSig init 0
+;aFinalSig init 0
 
 ifftsize = 1024 
 ioverlap = ifftsize / 4
@@ -159,97 +159,99 @@ iFreqTable	ftgen	0,	0,	inbins,	2,	0
 iAmpTable	ftgen	0,	0,	inbins,	2,	0
 
 ; setup swap tables
-iSwapCount init 0
-loopSwap:
-
-	iFreqTableSwap[iSwapCount]	ftgen	0,	0,	inbins,	2,	0
-
-	loop_lt	iSwapCount,	1,	iNumSwapTables,	loopSwap
+;iSwapCount init 0
+;loopSwap:
+;
+;	iFreqTableSwap[iSwapCount]	ftgen	0,	0,	inbins,	2,	0
+;
+;	loop_lt	iSwapCount,	1,	iNumSwapTables,	loopSwap
 
 ; write frequency data to function table
 kFlag	pvsftw	fsig,	iAmpTable,	iFreqTable	
 
 ; transfer frequency data to duplicate tables for individual processing
-iTableCount init 0
-loopTables:
-	
-	iFreqTables[iTableCount]	ftgen	0,	0,	inbins,	2,	0
-	
-	tablecopy iFreqTables[iTableCount], iFreqTable
+;iTableCount init 0
+;loopTables:
+;	
+;	iFreqTables[iTableCount]	ftgen	0,	0,	inbins,	2,	0
+;	
+;	tablecopy iFreqTables[iTableCount], iFreqTable
+;
+;	loop_lt iTableCount,	1,	iNumRays,	loopTables
 
-	loop_lt iTableCount,	1,	iNumRays,	loopTables
+ if kFlag == 0 goto contin 
 
- if kFlag == 0 then 
+;aFinalSig pvsynth	fsig
 
-aFinalSig pvsynth	fsig
+;gaOut2	= aFinalSig
 
-gaOut2	= aFinalSig
-
- else
+; else
 
 ;************** Frequency Processing *****************
 
-kSwapTable init 0
-kSwapTableNum init 0
-kPrevTableNum init 0
-kSwapTableModulo init 0
+;kSwapTable init 0
+;kSwapTableNum init 0
+;kPrevTableNum init 0
+;kSwapTableModulo init 0
 
 ; modify frequency data from fsig with mandelbulb escape values from application
-kCount init 0
-kRayCount init 0
-while kRayCount < iNumRays do 
+kCount = 0
+;kRayCount init 0
+;while kRayCount < iNumRays do 
 	
-	kSwapTable = 0
-	kSwapTableModulo = kSwapTableNum % 2
+	;kSwapTable = 0
+	;kSwapTableModulo = kSwapTableNum % 2
 
-	while kCount < iMandelMaxPoints do
+loop:
+	;while kCount < iMandelMaxPoints do
 
-		S_ChannelName sprintfk	"mandelEscapeVal%d%d",	kRayCount,	kCount
+		S_ChannelName sprintfk	"mandelEscapeVal%d",	kCount
 
 		;kMandelArr[kCount]	chnget	S_ChannelName
 		kMandelVal	chnget	S_ChannelName
 
 		; read frequency data from iFreqTable
-		kFreq	tablekt	kCount,	iFreqTables[kRayCount]
+		kFreq	tablekt	kCount,	iFreqTable
 	
 		; multiply kMandelVal with frequency value 
 		kProcFreqVal = kFreq * kMandelVal
 
 		; write processed freq data back to table
-		tablewkt	kProcFreqVal,	kCount,	iFreqTables[kRayCount]	
+		tablewkt	kProcFreqVal,	kCount,	iFreqTable	
 
-		kCount += 1
-	od
-				
-	kRayCount += 1
-od
+	;	kCount += 1
+	;od
+	loop_lt	kCount,	1,	iMandelMaxPoints,	loop
+;kCount = 0				
+	;kRayCount += 1
+;od
 		
 ; average values across tables and reduce back to single table
-kAvgVal init 0
-kCell init 0
-kTable init 0
-while kCell < iMandelMaxPoints do
-	
-	while kTable < iNumRays do
+;kAvgVal init 0
+;kCell init 0
+;kTable init 0
+;while kCell < iMandelMaxPoints do
+;	
+;	while kTable < iNumRays do
+;
+;		kCellVal	tablekt	kCell,	iFreqTables[kTable]
+;		
+;		kAvgVal += kCellVal
+;		kAvgVal /= iNumRays
+;	
+;		tablewkt	kAvgVal,	kCell,	iFreqTableSwap[kSwapTableModulo]
+;
+;		kTable += 1
+;	od
+;
+;kCell += 1
+;od	
 
-		kCellVal	tablekt	kCell,	iFreqTables[kTable]
-		
-		kAvgVal += kCellVal
-		kAvgVal /= iNumRays
-	
-		tablewkt	kAvgVal,	kCell,	iFreqTableSwap[kSwapTableModulo]
-
-		kTable += 1
-	od
-
-kCell += 1
-od	
-
-kPrevTableNum = kSwapTableModulo
-kSwapTableNum += 1
+;kPrevTableNum = kSwapTableModulo
+;kSwapTableNum += 1
 
 ; read new frequency data
-tablecopy	iFreqTable,	iFreqTableSwap[kPrevTableNum]
+;tablecopy	iFreqTable,	iFreqTableSwap[kPrevTableNum]
 
 ;kCount = 0
 ;kRayCount = 0
@@ -259,11 +261,14 @@ tablecopy	iFreqTable,	iFreqTableSwap[kPrevTableNum]
 pvsftr	fsig,	iAmpTable,	iFreqTable
 
 ; resynthesize the audio signal
+
+contin:
+
 aFinalSig	pvsynth	fsig
 
 gaOut2	= aFinalSig
 
- endif
+; endif
 
 ;*********** Amplitude processing ******************
 ;ifn = giMandelTable 
