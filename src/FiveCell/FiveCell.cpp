@@ -1191,14 +1191,22 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 	
 	std::vector<glm::vec3> rayOrigin;
 	std::vector<glm::vec3> rayDirection;
+	std::vector<float> step;
 
 	for(int i = 0; i < NUM_RAYS; i++){
 
-		float xPos = -0.5f + (i * 0.5f);
+		float xPos;
+		int mod = i % 2;
+		if(!mod) xPos = 0.0f + (i * 0.1f);
+		if(mod) xPos = 0.0f - (i * 0.1f);
 		rayOrigin.push_back(glm::vec3(xPos, 0.0f, -3.0f));
 		glm::vec3 rayEndPoint = glm::vec3(xPos, 0.0f, 3.0f);
-		rayDirection.push_back(rayEndPoint - rayOrigin[i]);
+		glm::vec3 rayDiff = rayEndPoint - rayOrigin[i];
+		rayDirection.push_back(rayDiff);
 		rayDirection[i] = glm::normalize(rayDirection[i]);	
+		float length = glm::length(rayDiff); 
+		float rayStep = length / MAX_MANDEL_STEPS;
+		step.push_back(length);
 	}
 	
 	// send maxSteps value to CSound to determine length of array
@@ -1210,7 +1218,6 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 	*m_cspMaxSteps = (MYFLT)m_iMaxSteps;
 
 	float start = 0.0;
-	float step = 0.06f;
 	int iterations = 50;
 	float power = 2.0f;
 	//float dr = 1.0f;
@@ -1252,7 +1259,7 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 			*m_cspMandelEscapeVals[i][j] = (MYFLT)count;
 
 
-			position += step * rayDirection[i];
+			position += step[i] * rayDirection[i];
 		}	
 	}
 

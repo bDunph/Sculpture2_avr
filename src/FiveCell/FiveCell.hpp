@@ -2,8 +2,8 @@
 #define FIVE_CELL_HPP
 
 //#include "Skybox.hpp"
-#define NUM_RAYS 3
-#define MAX_MANDEL_STEPS 513 
+#define NUM_RAYS 1
+#define MAX_MANDEL_STEPS 512 
 
 #include <string>
 #include <vector>
