@@ -1187,25 +1187,104 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 	//glm::vec3 rayOrigin = glm::vec3(nearRayPos.x / nearRayPos.w, nearRayPos.y / nearRayPos.w, nearRayPos.z / nearRayPos.w);
 	//glm::vec3 rayEndPoint = glm::vec3(farRayPos.x / farRayPos.w, farRayPos.y / farRayPos.w, farRayPos.z / farRayPos.w);
 	
+	// lay out a grid of rays centered at the origin to sample coordinates from
 	std::vector<glm::vec3> rayOrigin;
 	std::vector<glm::vec3> rayDirection;
 	std::vector<float> step;
+	bool initialRay = true;
+	float interval = 0.1f;
 
+for(int y = 0; y < NUM_RAYS; y++){
+
+	float yPos1, yPosMinus, yPosPlus;
+	if(initialRay){
+		yPos1 = 0.0f;
+		yPosMinus = 0.0f;
+		yPosPlus = 0.0f;
+	} else {
+		yPosMinus = -y * interval;
+		yPosPlus = y * interval;
+	}
+	
 	for(int i = 0; i < NUM_RAYS; i++){
 
-		float xPos;
-		int mod = i % 2;
-		if(!mod) xPos = 0.0f + (i * 0.1f);
-		if(mod) xPos = 0.0f - (i * 0.1f);
-		rayOrigin.push_back(glm::vec3(xPos, 0.0f, -3.0f));
-		glm::vec3 rayEndPoint = glm::vec3(xPos, 0.0f, 3.0f);
-		glm::vec3 rayDiff = rayEndPoint - rayOrigin[i];
-		rayDirection.push_back(rayDiff);
-		rayDirection[i] = glm::normalize(rayDirection[i]);	
-		float length = glm::length(rayDiff); 
-		float rayStep = length / MAX_MANDEL_STEPS;
-		step.push_back(length);
+		float xPos1, xPosMinus, xPosPlus;
+		if(initialRay){
+			xPos1 = 0.0f;
+			glm::vec3 rayStart = glm::vec3(xPos1, yPos1, -3.0f);
+			rayOrigin.push_back(rayStart);
+			glm::vec3 rayEndPointInitial = glm::vec3(xPos1, yPos1, 3.0f);
+			glm::vec3 rayDiff = rayEndPointInitial - rayStart;
+			glm::vec3 rayDir = glm::normalize(rayDiff);
+			rayDirection.push_back(rayDir);
+			float length = glm::length(rayDiff); 
+			float rayStep = length / MAX_MANDEL_STEPS;
+			step.push_back(rayStep);
+			initialRay = false;
+
+		} else {
+			xPosMinus = -i * interval;
+			xPosPlus = i * interval;
+
+			glm::vec3 rayStartMinus = glm::vec3(xPosMinus, yPosMinus, -3.0f);
+			glm::vec3 rayStartPlus = glm::vec3(xPosPlus, yPosPlus, -3.0f);
+
+			rayOrigin.push_back(rayStartMinus);
+			rayOrigin.push_back(rayStartPlus);
+
+			glm::vec3 rayEndPointMinus = glm::vec3(xPosMinus, yPosMinus, 3.0f);
+			glm::vec3 rayEndPointPlus = glm::vec3(xPosPlus, yPosPlus, 3.0f);
+
+			glm::vec3 rayDiffMinus = rayEndPointMinus - rayStartMinus;
+			glm::vec3 rayDiffPlus = rayEndPointPlus - rayStartPlus;
+
+			glm::vec3 rayDirMinus = glm::normalize(rayDiffMinus);
+			glm::vec3 rayDirPlus = glm::normalize(rayDiffPlus);
+
+			rayDirection.push_back(rayDirMinus);
+			rayDirection.push_back(rayDirPlus);
+
+			float lengthMinus = glm::length(rayDiffMinus); 
+			float lengthPlus = glm::length(rayDiffPlus); 
+
+			float rayStepMinus = lengthMinus / MAX_MANDEL_STEPS;
+			float rayStepPlus = lengthPlus / MAX_MANDEL_STEPS;
+
+			step.push_back(rayStepMinus);
+			step.push_back(rayStepPlus);
+
+			if(yPosPlus && yPosMinus && xPosMinus && xPosPlus){
+	
+				glm::vec3 rayStartNxPy = glm::vec3(xPosMinus, yPosPlus, -3.0f);
+				glm::vec3 rayStartPxNy = glm::vec3(xPosPlus, yPosMinus, -3.0f);
+
+				rayOrigin.push_back(rayStartNxPy);
+				rayOrigin.push_back(rayStartPxNy);
+
+				glm::vec3 rayEndNxPy = glm::vec3(xPosMinus, yPosPlus, 3.0f);
+				glm::vec3 rayEndPxNy = glm::vec3(xPosPlus, yPosMinus, 3.0f);		
+
+				glm::vec3 rayDiffNxPy = rayEndNxPy - rayStartNxPy;
+				glm::vec3 rayDiffPxNy = rayEndPxNy = rayStartPxNy;			
+	
+				glm::vec3 rayDirNxPy = glm::normalize(rayDiffNxPy);
+				glm::vec3 rayDirPxNy = glm::normalize(rayDiffPxNy);
+
+				rayDirection.push_back(rayDirNxPy);
+				rayDirection.push_back(rayDirPxNy);
+
+				float lengthNxPy = glm::length(rayDiffNxPy);
+				float lengthPxNy = glm::length(rayDiffPxNy);	
+
+				float rayStepNxPy = lengthNxPy / MAX_MANDEL_STEPS;
+				float rayStepPxNy = lengthPxNy / MAX_MANDEL_STEPS;
+
+				step.push_back(rayStepNxPy);
+				step.push_back(rayStepPxNy);		
+			}
+		}
 	}
+}
 	
 	// send maxSteps value to CSound to determine length of array
 	//*m_cspMandelMaxPoints = (MYFLT)maxSteps;
@@ -1223,9 +1302,15 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 	float phi = 0.0f;
 	float r = 0.0f;
 	double count = 0.0f;
+	int rayCount = rayOrigin.size();
+	std::vector<std::vector<float>> escapeVals;
+	std::vector<float> rays;
+
+	// make rays vector same size as rayOrigins
+	for(int i = 0; i < rayCount; i++) rays.push_back((float)i);
 
 	// loop to step through rays
-	for(int i = 0; i < NUM_RAYS; i++){
+	for(int i = 0; i < rayCount; i++){
 
 		//glm::vec3 position = rayOrigin + glm::vec3(sin(glfwGetTime()), 0.0f, 0.0f);	
 		glm::vec3 position = rayOrigin[i];	
@@ -1254,25 +1339,28 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 			count /= (double)iterations;
 
 			//values to CSound
-			m_iEscapeVals[i][j] = (float)count;
-
+			//m_iEscapeVals[i][j] = (float)count;
+			rays.push_back((float)count);
 
 			position += step[i] * rayDirection[i];
 		}	
+		
+		escapeVals.push_back(rays);		
 	}
 
 	float avgVal;
 
 	for(int i = 0; i < m_iMaxSteps; i++){
 
-		for(int j = 0; j < NUM_RAYS; j++){
+		for(int j = 0; j < rayCount; j++){
 
-			float escVal = m_iEscapeVals[j][i];
+			//float escVal = m_iEscapeVals[j][i];
+			float escVal = escapeVals[j][i];
 			
 			avgVal += escVal;
 		}
 
-		avgVal /= NUM_RAYS;
+		avgVal /= rayOrigin.size();
 		*m_cspMandelEscapeVals[i] = (MYFLT)avgVal;
 	}
 

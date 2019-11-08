@@ -2,7 +2,7 @@
 #define FIVE_CELL_HPP
 
 //#include "Skybox.hpp"
-#define NUM_RAYS 5
+#define NUM_RAYS 4
 #define MAX_MANDEL_STEPS 512 
 
 #include <string>
@@ -160,7 +160,7 @@ private:
 	//MYFLT* m_cspMandelMaxPoints;
 	MYFLT* m_cspMaxSteps;
 
-	float m_iEscapeVals[NUM_RAYS][MAX_MANDEL_STEPS];
+	//float m_iEscapeVals[NUM_RAYS][MAX_MANDEL_STEPS];
 
 	//raymarching quad
 	unsigned int m_uiNumSceneVerts;
