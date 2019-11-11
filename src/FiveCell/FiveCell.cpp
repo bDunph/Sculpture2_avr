@@ -1192,7 +1192,7 @@ void FiveCell::update(glm::mat4 projMat, glm::mat4 viewMat, glm::mat4 eyeMat, gl
 	std::vector<glm::vec3> rayDirection;
 	std::vector<float> step;
 	bool initialRay = true;
-	float interval = 0.1f;
+	float interval = 0.8f;
 
 for(int y = 0; y < NUM_RAYS; y++){
 
@@ -1296,7 +1296,7 @@ for(int y = 0; y < NUM_RAYS; y++){
 
 	float start = 0.0;
 	int iterations = 50;
-	float power = 2.0f;
+	float power = 3.0f;
 	//float dr = 1.0f;
 	float theta = 0.0f;
 	float phi = 0.0f;
@@ -1326,9 +1326,12 @@ for(int y = 0; y < NUM_RAYS; y++){
 				// mandelbulb formula adapted from 
 				// https://www.shadertoy.com/view/tdtGRj
 				r = length(z);
-				theta = acos(z.z / r) * sineControlVal;
-				phi = atan2(z.y, z.x) * sineControlVal;
-				z = pow(r, power) * glm::vec3(sin(theta) * cos(phi), cos(theta), sin(phi) * sin(theta));
+				theta = acos(z.y / r) * sineControlVal;
+				phi = atan2(z.z, z.x) * sineControlVal;
+				theta *= power;
+				phi *= power;
+				z = pow(r, power) * glm::vec3(sin(theta) * cos(phi), cos(theta), sin(phi) * sin(theta)) + position;
+
 				count = (double)j;
 
 				if(length(z) > 2.0f) break;

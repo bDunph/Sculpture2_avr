@@ -32,8 +32,8 @@ glm::vec3 m_vec3DevCamFront;
 // ----------------------------------------------------------------------
 Graphics::Graphics(std::unique_ptr<ExecutionFlags>& flagPtr) : 
 	m_pGLContext(nullptr),
-	m_nCompanionWindowWidth(640),
-	m_nCompanionWindowHeight(640),
+	m_nCompanionWindowWidth(320),
+	m_nCompanionWindowHeight(320),
 	m_iTrackedControllerCount(0),
 	m_iTrackedControllerCount_Last(-1),
 	m_iValidPoseCount_Last(-1),
